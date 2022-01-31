@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 
 public class UILabelLocalize : Label
 {
-    // bool isLocalized = false;
+    bool isLocalized = false;
 
     // public override void MarkAsChanged()
     // {
