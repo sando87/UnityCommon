@@ -15,10 +15,18 @@ namespace EditorGUITable
 	[CustomPropertyDrawer(typeof(TableAttribute))]
 	public class TableDrawer : PropertyDrawer
 	{
-
 		protected GUITableState tableState;
 
 		Rect lastRect;
+
+        bool isKeyDown = false;
+        int RowCount = -1;
+        int ColumCount = -1;
+        int MinControlID = -1;
+        int MaxControlID = -1;
+
+        private Rect mPosition = Rect.zero;
+        private int mPreIndex = 100;
 
 		public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
 		{
@@ -44,7 +52,9 @@ namespace EditorGUITable
 		}
 
 		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-		{
+        {
+            ProcessKeyInput();
+
 			TableAttribute tableAttribute = (TableAttribute) attribute;
 
 			//Check that it is a collection
@@ -53,27 +63,50 @@ namespace EditorGUITable
 			{
 				EditorGUI.LabelField(position, label.text, "Use the Table attribute with a collection.");
 				return;
-			}
+            }
 
-			string collectionPath = match.Groups[1].Value;
+            string collectionPath = match.Groups[1].Value;
 
-			// Check that it's the first element
-			string index = match.Groups[2].Value;
+            // Check that it's the first element
+            string index = match.Groups[2].Value;
 
-			if (index != "0")
-				return;
-			// Sometimes GetLastRect returns 0, so we keep the last relevant value
-			if (GUILayoutUtility.GetLastRect().width > 1f)
-				lastRect = GUILayoutUtility.GetLastRect();
+            int curIndex = int.Parse(index);
 
-			SerializedProperty collectionProperty = property.serializedObject.FindProperty(collectionPath);
+            if (curIndex == 0) mPosition = position; //테이블 초기 위치 설정
 
-			EditorGUI.indentLevel = 0;
+            if (mPreIndex > curIndex)
+            {
+                DrawTable(mPosition, property, label, collectionPath, tableAttribute);
+            }
 
-			Rect r = new Rect(position.x + 15f, position.y, position.width - 15f, lastRect.height);
+            mPreIndex = curIndex;
+        }
 
-			tableState = DrawTable (r, collectionProperty, label, tableAttribute);
-		}
+        // 테이블을 그려줌
+        private void DrawTable(Rect position, SerializedProperty property, GUIContent label, string collectionPath, TableAttribute tableAttribute)
+        {
+            // Sometimes GetLastRect returns 0, so we keep the last relevant value
+            if (GUILayoutUtility.GetLastRect().width > 1f)
+                lastRect = GUILayoutUtility.GetLastRect();
+
+            SerializedProperty collectionProperty = property.serializedObject.FindProperty(collectionPath);
+
+            EditorGUI.indentLevel = 0;
+
+            Rect r = new Rect(position.x + 15f, position.y, position.width - 15f, lastRect.height);
+
+            tableState = DrawTable(r, collectionProperty, label, tableAttribute);
+
+            List<string> properties = SerializationHelpers.GetElementsSerializedFields(collectionProperty, out bool isObjectReferencesCollection);
+            ColumCount = properties.Count;
+            RowCount = collectionProperty.arraySize;
+
+            if (MinControlID < 0)
+            {
+                MaxControlID = GUIUtility.GetControlID(FocusType.Passive) - 1;
+                MinControlID = MaxControlID - (ColumCount * RowCount) + 1;
+            }
+        }
 
 		protected virtual GUITableState DrawTable (Rect rect, SerializedProperty collectionProperty, GUIContent label, TableAttribute tableAttribute)
 		{
@@ -97,6 +130,40 @@ namespace EditorGUITable
 			}
 			return res;
 		}
+
+
+        private void ProcessKeyInput()
+        {
+            Event e = Event.current;
+            if (e != null)
+            {
+                if (e.type == EventType.KeyDown && !isKeyDown)
+                {
+                    switch (e.keyCode)
+                    {
+                        case KeyCode.UpArrow:
+                            {
+                                if (GUIUtility.keyboardControl - ColumCount >= MinControlID)
+                                    GUIUtility.keyboardControl -= ColumCount;
+                                break;
+                            }
+                        case KeyCode.DownArrow:
+                            {
+                                int maxCtrlID = Mathf.Min(MaxControlID, MinControlID + (ColumCount * RowCount) - 1);
+                                if (GUIUtility.keyboardControl + ColumCount <= maxCtrlID)
+                                    GUIUtility.keyboardControl += ColumCount;
+                                break;
+                            }
+                    }
+                }
+
+                if (e.type == EventType.KeyDown)
+                    isKeyDown = true;
+                if (e.type == EventType.KeyUp)
+                    isKeyDown = false;
+            }
+
+        }
 
 	}
 
