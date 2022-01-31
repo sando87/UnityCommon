@@ -32,16 +32,10 @@ public class DataControllerEditor : EditorWindow
         {
             if( EditorApplication.isPlaying ) //플레이중이면
             {
-                ViewMain mainView = FindObjectOfType<ViewMain>();
-                if(mainView != null) // 현재 Main 화면이면
+                ViewBase currentView = FindObjectOfType<ViewBase>();
+                if(currentView != null) // 현재 Main 화면이면
                 {
-                    int agesTableIndex = GamePlayData.UserSaveData.AgeTableIndex;
-                    CSVAgePointData curAgeInfo = CSVAgePointTable.GetData(agesTableIndex);
-                    if (curAgeInfo != null) 
-                    {
-                        GamePlayData.UserSaveData.IngameScore = curAgeInfo.score - GamePlayData.UserSaveData.CurrentBuildingScore;
-                        mainView.InvokePrivateMethod("UpdateAgeState", null);
-                    }
+                    currentView.UpdateUIState();
                 }
             }
         }
@@ -74,10 +68,10 @@ public class DataControllerEditor : EditorWindow
 
             if (EditorApplication.isPlaying) //플레이중이면
             {
-                ViewMain mainView = FindObjectOfType<ViewMain>();
-                if (mainView != null) // 현재 Main 화면이면
+                ViewBase currentView = FindObjectOfType<ViewBase>();
+                if (currentView != null) // 현재 Main 화면이면
                 {
-                    mainView.InvokePrivateMethod("UpdateAgeState", null);
+                    currentView.UpdateUIState();
                 }
             }
         }

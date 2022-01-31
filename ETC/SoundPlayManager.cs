@@ -86,11 +86,11 @@ public class SoundPlayManager : SingletonMono<SoundPlayManager>
         if(fadeout)
         {
             float oriVolume = AudioSourceForBGM.volume;
-            AudioSourceForBGM.DOFade(0, 0.5f).OnComplete(() =>
-            {
-                AudioSourceForBGM.volume = oriVolume;
-                AudioSourceForBGM.Stop();
-            });
+            // AudioSourceForBGM.DOFade(0, 0.5f).OnComplete(() =>
+            // {
+            //     AudioSourceForBGM.volume = oriVolume;
+            //     AudioSourceForBGM.Stop();
+            // });
         }
         else
         {
