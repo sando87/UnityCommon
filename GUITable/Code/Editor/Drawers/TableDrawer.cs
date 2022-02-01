@@ -22,13 +22,14 @@ namespace EditorGUITable
         bool isKeyDown = false;
         int RowCount = -1;
         int ColumCount = -1;
-        int MinControlID = -1;
-        int MaxControlID = -1;
 
         private Rect mPosition = Rect.zero;
         private int mPreIndex = 100;
 
-		public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
+        private int mNewLineIndex = -1;
+        private int mDelLineIndex = -1;
+
+        public override float GetPropertyHeight (SerializedProperty property, GUIContent label)
 		{
 			//Check that it is a collection
 			Match match = Regex.Match(property.propertyPath, "^([a-zA-Z0-9_]*).Array.data\\[([0-9]*)\\]$");
@@ -91,6 +92,18 @@ namespace EditorGUITable
 
             SerializedProperty collectionProperty = property.serializedObject.FindProperty(collectionPath);
 
+            if(mNewLineIndex >= 0)
+            {
+                collectionProperty.InsertArrayElementAtIndex(mNewLineIndex);
+                mNewLineIndex = -1;
+            }
+
+            if (mDelLineIndex >= 0)
+            {
+                collectionProperty.DeleteArrayElementAtIndex(mDelLineIndex);
+                mDelLineIndex = -1;
+            }
+
             EditorGUI.indentLevel = 0;
 
             Rect r = new Rect(position.x + 15f, position.y, position.width - 15f, lastRect.height);
@@ -100,23 +113,48 @@ namespace EditorGUITable
             List<string> properties = SerializationHelpers.GetElementsSerializedFields(collectionProperty, out bool isObjectReferencesCollection);
             ColumCount = properties.Count;
             RowCount = collectionProperty.arraySize;
-
-            if (MinControlID < 0)
-            {
-                MaxControlID = GUIUtility.GetControlID(FocusType.Passive) - 1;
-                MinControlID = MaxControlID - (ColumCount * RowCount) + 1;
-            }
         }
 
 		protected virtual GUITableState DrawTable (Rect rect, SerializedProperty collectionProperty, GUIContent label, TableAttribute tableAttribute)
 		{
 			if (tableAttribute.properties == null && tableAttribute.widths == null)
-				return GUITable.DrawTable(rect, tableState, collectionProperty, GUITableOption.AllowScrollView(false));
+            {
+                return GUITable.DrawTable(rect, tableState, collectionProperty, GetMyFunctionalPropertyColumns(collectionProperty), GUITableOption.AllowScrollView(false));
+                //return GUITable.DrawTable(rect, tableState, collectionProperty, GUITableOption.AllowScrollView(false));
+            }
 			else if (tableAttribute.widths == null)
 				return GUITable.DrawTable(rect, tableState, collectionProperty, tableAttribute.properties.ToList(), GUITableOption.AllowScrollView(false));
 			else
 				return GUITable.DrawTable(rect, tableState, collectionProperty, GetPropertyColumns(tableAttribute), GUITableOption.AllowScrollView(false));
-		}
+        }
+
+        protected List<SelectorColumn> GetMyFunctionalPropertyColumns(SerializedProperty collectionProperty)
+        {
+            List<string> properties = SerializationHelpers.GetElementsSerializedFields(collectionProperty, out bool isObjectReferencesCollection);
+
+            List<SelectorColumn> columns = new List<SelectorColumn>();
+            
+            columns.Add(new SelectFromFunctionColumn(sp =>
+            {
+                List<Test> list = new List<Test>();
+                return new ActionCell("+", (idx) => mNewLineIndex = idx);
+            },
+            "New",
+            TableColumn.Width(20f),
+            TableColumn.Optional(true)));
+            
+            columns.Add(new SelectFromFunctionColumn(sp =>
+            {
+                return new ActionCell("-", (idx) => mDelLineIndex = idx);
+            },
+            "Del",
+            TableColumn.Width(20f),
+            TableColumn.Optional(true)));
+
+            columns.AddRange(properties.Select(prop => (SelectorColumn)new SelectFromPropertyNameColumn(prop, ObjectNames.NicifyVariableName(prop))));
+
+            return columns;
+        }
 
 		protected static List<SelectorColumn> GetPropertyColumns (TableAttribute tableAttribute)
 		{
@@ -143,15 +181,34 @@ namespace EditorGUITable
                     {
                         case KeyCode.UpArrow:
                             {
-                                if (GUIUtility.keyboardControl - ColumCount >= MinControlID)
-                                    GUIUtility.keyboardControl -= ColumCount;
+                                string focusID = GUI.GetNameOfFocusedControl();
+                                string[] pieces = focusID.Split('_');
+                                if(pieces.Length == 2)
+                                {
+                                    int rowIdx = int.Parse(pieces[0]);
+                                    int colIdx = int.Parse(pieces[1]);
+                                    if (rowIdx > 0)
+                                    {
+                                        string nextFocusID = (rowIdx - 1) + "_" + colIdx;
+                                        GUI.FocusControl(nextFocusID);
+                                    }
+                                }
                                 break;
                             }
                         case KeyCode.DownArrow:
                             {
-                                int maxCtrlID = Mathf.Min(MaxControlID, MinControlID + (ColumCount * RowCount) - 1);
-                                if (GUIUtility.keyboardControl + ColumCount <= maxCtrlID)
-                                    GUIUtility.keyboardControl += ColumCount;
+                                string focusID = GUI.GetNameOfFocusedControl();
+                                string[] pieces = focusID.Split('_');
+                                if (pieces.Length == 2)
+                                {
+                                    int rowIdx = int.Parse(pieces[0]);
+                                    int colIdx = int.Parse(pieces[1]);
+                                    if(rowIdx < RowCount - 1)
+                                    {
+                                        string nextFocusID = (rowIdx + 1) + "_" + colIdx;
+                                        GUI.FocusControl(nextFocusID);
+                                    }
+                                }
                                 break;
                             }
                     }

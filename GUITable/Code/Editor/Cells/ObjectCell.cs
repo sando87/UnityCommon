@@ -17,11 +17,13 @@ namespace EditorGUITable
 		SerializedObject so;
 		string propertyPath;
 
-		public override void DrawCell (Rect rect)
+		public override void DrawCell (Rect rect, int idxRow, int idxColumn)
 		{
 			if (sp != null)
-			{
-				EditorGUI.ObjectField (rect, sp, GUIContent.none);
+            {
+                GUI.SetNextControlName(idxRow + "_" + idxColumn);
+
+                EditorGUI.ObjectField (rect, sp, GUIContent.none);
 				so.ApplyModifiedProperties ();
 			}
 			else

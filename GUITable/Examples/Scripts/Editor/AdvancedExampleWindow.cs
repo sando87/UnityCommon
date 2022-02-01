@@ -59,7 +59,7 @@ public class AdvancedExampleWindow : EditorWindow
 			sp => 
 		{
 			Enemy enemy = (Enemy) sp.objectReferenceValue;
-			return new ActionCell ("Instantiate", () => enemy.Instantiate ());
+			return new ActionCell ("Instantiate", (idx) => enemy.Instantiate ());
 		}, 
 			"Instantiation", 
 			TableColumn.Width(110f), 

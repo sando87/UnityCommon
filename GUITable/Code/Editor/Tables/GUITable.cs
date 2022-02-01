@@ -188,7 +188,7 @@ namespace EditorGUITable
 						true, true, true, true);
 
 					list.drawElementCallback = (Rect r, int index, bool isActive, bool isFocused) => {
-						DrawLine (tableState, columns, orderedRows[index], r.xMin + (list.draggable ? 0 : 14), r.yMin, tableEntry.rowHeight);
+						DrawLine (tableState, columns, orderedRows[index], index, r.xMin + (list.draggable ? 0 : 14), r.yMin, tableEntry.rowHeight);
 					};
 
 					list.elementHeight = tableEntry.rowHeight;
@@ -256,13 +256,14 @@ namespace EditorGUITable
 			}
 			else
 			{
-				foreach (List<TableCell> row in orderedRows)
-				{
-					currentX = tableEntry.allowScrollView ? 0 : rect.x;
-					DrawLine (tableState, columns, row, currentX, currentY, rowHeight);
-					currentY += rowHeight;
-				}
-			}
+                for (int i = 0; i < orderedRows.Count; ++i)
+                {
+                    List<TableCell> row = orderedRows[i];
+                    currentX = tableEntry.allowScrollView ? 0 : rect.x;
+                    DrawLine(tableState, columns, row, i, currentX, currentY, rowHeight);
+                    currentY += rowHeight;
+                }
+            }
 
 			GUI.enabled = true;
 
@@ -331,6 +332,7 @@ namespace EditorGUITable
 			GUITableState tableState,
 			List<TableColumn> columns,
 			List<TableCell> row, 
+			int rowIndex,
 			float currentX,
 			float currentY,
 			float rowHeight)
@@ -348,7 +350,7 @@ namespace EditorGUITable
 				TableColumn column = columns [i];
 				TableCell property = row[i];
 				GUI.enabled = column.entry.enabledCells;
-				property.DrawCell (new Rect(currentX, currentY, tableState.columnSizes[i], rowHeight));
+				property.DrawCell (new Rect(currentX, currentY, tableState.columnSizes[i], rowHeight), rowIndex, i);
 				currentX += tableState.columnSizes[i] + 4f;
 			}
 		}

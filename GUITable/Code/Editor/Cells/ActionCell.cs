@@ -14,14 +14,16 @@ namespace EditorGUITable
 	public class ActionCell : TableCell
 	{
 		string name;
-		System.Action action;
+		System.Action<int> action;
 
-		public override void DrawCell (Rect rect)
+        public override void DrawCell (Rect rect, int idxRow, int idxColumn)
 		{
-			if (GUI.Button (rect, name))
+            GUI.SetNextControlName(idxRow + "_" + idxColumn);
+			
+            if (GUI.Button (rect, name))
 			{
 				if (action != null)
-					action.Invoke ();
+					action.Invoke (idxRow);
 			}
 		}
 
@@ -33,7 +35,7 @@ namespace EditorGUITable
 			}
 		}
 
-		public ActionCell (string name, System.Action action)
+		public ActionCell (string name, System.Action<int> action)
 		{
 			this.name = name;
 			this.action = action;

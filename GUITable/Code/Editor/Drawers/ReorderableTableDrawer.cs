@@ -15,8 +15,12 @@ namespace EditorGUITable
 		{
 			if (tableState != null)
 				rect.width = Mathf.Min (rect.width, tableState.totalWidth + 20f);
+
 			if (tableAttribute.properties == null && tableAttribute.widths == null)
-				return GUITable.DrawTable(rect, tableState, collectionProperty, GUITableOption.AllowScrollView(false), GUITableOption.Reorderable());
+            {
+                return GUITable.DrawTable(rect, tableState, collectionProperty, GetMyFunctionalPropertyColumns(collectionProperty), GUITableOption.AllowScrollView(false), GUITableOption.Reorderable());
+                //return GUITable.DrawTable(rect, tableState, collectionProperty, GUITableOption.AllowScrollView(false), GUITableOption.Reorderable());
+            }
 			else if (tableAttribute.widths == null)
 				return GUITable.DrawTable(rect, tableState, collectionProperty, tableAttribute.properties.ToList(), GUITableOption.AllowScrollView(false), GUITableOption.Reorderable());
 			else

@@ -22,7 +22,7 @@ namespace EditorGUITable
 		/// Draws the cell using GUI (without GUILayout).
 		/// </summary>
 		/// <param name="rect">Rect.</param>
-		public abstract void DrawCell (Rect rect);
+		public abstract void DrawCell (Rect rect, int idxRow, int idxColumn);
 
 		public abstract string comparingValue { get; }
 

@@ -42,7 +42,7 @@ public class ActionExampleEditor : Editor
 				new LabelCell (entry.stringProperty),
 				new PropertyCell (serializedObject, string.Format("simpleObjects.Array.data[{0}].floatProperty", i)),
 				new PropertyCell (serializedObject, string.Format("simpleObjects.Array.data[{0}].objectProperty", i)),
-				new ActionCell ("Reset", () => entry.Reset() ),
+				new ActionCell ("Reset", (idx) => entry.Reset() ),
 			});
 		}
 

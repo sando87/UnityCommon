@@ -40,9 +40,11 @@ public class SpawnersCell : TableCell
 	SerializedProperty sp;
 	SerializedObject so;
 
-	public override void DrawCell (Rect rect)
-	{
-		sp.intValue = EditorGUI.MaskField (rect, sp.intValue, AdvancedExample.Instance.spawners.Select(s => s.name).ToArray());
+	public override void DrawCell (Rect rect, int idxRow, int idxColumn)
+    {
+        GUI.SetNextControlName(idxRow + "_" + idxColumn);
+
+        sp.intValue = EditorGUI.MaskField (rect, sp.intValue, AdvancedExample.Instance.spawners.Select(s => s.name).ToArray());
 		so.ApplyModifiedProperties();
 	}
 

@@ -17,9 +17,11 @@ namespace EditorGUITable
 
 		string value;
 
-		public override void DrawCell (Rect rect)
-		{
-			GUI.Label(rect, value);
+		public override void DrawCell (Rect rect, int idxRow, int idxColumn)
+        {
+            GUI.SetNextControlName(idxRow + "_" + idxColumn);
+
+            GUI.Label(rect, value);
 		}
 
 		public override string comparingValue
