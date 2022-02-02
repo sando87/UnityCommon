@@ -360,6 +360,21 @@ public static class MyUtils
         System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);
         return fi.FieldType;
     }
+    // guid값에서 실제 Asset 리소스 객체 가져옴
+    public static UnityEngine.Object GetAssetFromGUID(string guid, Type assetType)
+    {
+        string path = AssetDatabase.GUIDToAssetPath(guid);
+        return AssetDatabase.LoadAssetAtPath(path, assetType);
+    }
+    // guid값에서 실제 Asset 리소스 객체 가져옴
+    public static string GetGUIDFromAsset(UnityEngine.Object asset)
+    {
+        string path = AssetDatabase.GetAssetPath(asset);
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        return guid;
+    }
+
+
     // Extentions =====================================
     public static void ExSetPosition2D(this Transform tr, Vector2 val)
     {
