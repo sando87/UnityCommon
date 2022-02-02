@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -336,6 +337,28 @@ public static class MyUtils
 #elif UNITY_ANDROID || UNITY_IPHONE
         return Input.touchCount > 0 ? Input.GetTouch(0).position : Vector2.zero;
 #endif
+    }
+
+    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트로 반환
+    public static object GetValueFromProp(SerializedProperty property, string path)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(path);
+        return fi.GetValue(property.serializedObject.targetObject);
+    }
+    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트값을 세팅
+    public static void SetValueToProp(SerializedProperty property, object value)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);//this FieldInfo contains the type.
+        fi.SetValue(property.serializedObject.targetObject, value);
+    }
+    ////SerializedProperty 에서 실제 객체의 Type을 반환
+    public static System.Type GetTypeFromProp(SerializedProperty property)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);
+        return fi.FieldType;
     }
     // Extentions =====================================
     public static void ExSetPosition2D(this Transform tr, Vector2 val)
