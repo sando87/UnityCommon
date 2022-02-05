@@ -50,11 +50,13 @@ public class CSVParser<TEntity>//where TEntity : class
     {
         for (int i = 0; i < pairs.Length; i++)
         {
-            string result =
-            (null != obj.GetType().GetField(pairs[i].Name).GetValue(obj)) ?
-            Convert.ChangeType(obj.GetType().GetField(pairs[i].Name).GetValue(obj), Type.GetTypeCode(pairs[i].FieldType)).ToString() :
-            string.Empty;
-            result = result.Replace("\r", "").Replace("\n", "").Replace(CsvSeparator, " ");
+            string result = string.Empty;
+            FieldInfo field = obj.GetType().GetField(pairs[i].Name);
+            if (null != field.GetValue(obj))
+            {
+                result = ObjectToString(field.GetValue(obj), pairs[i].FieldType);
+            }
+            
             if (i == pairs.Length - 1)
             {
                 sbRows.AppendLine(result + CsvSeparator);
@@ -95,7 +97,8 @@ public class CSVParser<TEntity>//where TEntity : class
                     {
                         if (columnsValue[j] != null && columnsValue[j].Length > 0)
                         {
-                            fields[x].SetValue(instance, Convert.ChangeType(columnsValue[j], Type.GetTypeCode(fields[x].FieldType)));
+                            object realObject = StringToObject(columnsValue[j], fields[x].FieldType);
+                            fields[x].SetValue(instance, realObject);
                             break;
                         }
                     }
@@ -103,5 +106,64 @@ public class CSVParser<TEntity>//where TEntity : class
             }
             yield return (TEntity)instance;
         }
+    }
+
+    // 범용 object 객체를 해당 타입에 따라 특정 형태의 string으로 변환
+    private static string ObjectToString(object value, Type objType)
+    {
+        string result = string.Empty;
+        // Field 타입의 base클래스가 UnityEngine.Object일 경우 guid로 변환된다
+        if (MyUtils.IsSubType(objType, typeof(UnityEngine.Object)))
+        {
+            result = MyUtils.GetGUIDFromAsset(value as UnityEngine.Object);
+        }
+        else
+        {
+            // Field 타입이 class이거나 struct 타입이면 byteArray의 hexString으로 변환
+            TypeCode typeCode = Type.GetTypeCode(objType);
+            if (typeCode == TypeCode.Object)
+            {
+                result = JsonUtility.ToJson(value);
+                //Json안에 콤마가 있는경우 대체문자열 #으로 임시 변환하고 나중에 다시 복구할때 반대 수행
+                result = result.Replace(CsvSeparator, "#");
+            }
+            else
+            {
+                // Field 타입이 기본타입이면 해당 타입에 맞는 string으로 변환
+                result = Convert.ChangeType(value, typeCode).ToString();
+            }
+        }
+
+        result = result.Replace("\r", "").Replace("\n", "").Replace(CsvSeparator, " ");
+        return result;
+    }
+
+    // string데이터를 담고자하는 객체의 타입에 맞는 형태의 실제 object로 변환
+    private static object StringToObject(string data, Type objType)
+    {
+        object result = null;
+        // Field 타입의 base클래스가 UnityEngine.Object일 경우 guid정보에 맞는 실제 객체를 찾는다
+        if (MyUtils.IsSubType(objType, typeof(UnityEngine.Object)))
+        {
+            result = MyUtils.GetAssetFromGUID(data, objType);
+        }
+        else
+        {
+            // Field 타입이 class이거나 struct 타입이면 hexString -> byte[] -> realTypeobject
+            TypeCode typeCode = Type.GetTypeCode(objType);
+            if (typeCode == TypeCode.Object)
+            {
+                // 직렬화할때 임시로 바꿔뒀던 #을 다시 콤마로 변환 후 Json으로 역변환한다.
+                data = data.Replace("#", CsvSeparator);
+                result = JsonUtility.FromJson(data, objType);
+            }
+            else
+            {
+                // Field 타입이 기본타입이면 해당 타입에 맞는 string으로 변환
+                result = Convert.ChangeType(data, typeCode);
+            }
+        }
+
+        return result;
     }
 }

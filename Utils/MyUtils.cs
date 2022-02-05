@@ -373,6 +373,14 @@ public static class MyUtils
         string guid = AssetDatabase.AssetPathToGUID(path);
         return guid;
     }
+    public static bool IsSubType<Tsub, Tbase>()
+    {
+        return typeof(Tsub).IsSubclassOf(typeof(Tbase));
+    }
+    public static bool IsSubType(Type subTyp, Type baseType)
+    {
+        return subTyp.IsSubclassOf(baseType);
+    }
 
 
     // Extentions =====================================

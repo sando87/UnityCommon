@@ -52,8 +52,17 @@ namespace EditorGUITable
 			return 1f * EditorGUIUtility.singleLineHeight;
 		}
 
-		public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            if (GUI.Button(new Rect(70, 4, 70, 20), "ToCSV"))
+            {
+                property.serializedObject.targetObject.InvokePrivateMethod("ToCSV", null);
+            }
+            if (GUI.Button(new Rect(150, 4, 70, 20), "FromCSV"))
+            {
+                property.serializedObject.targetObject.InvokePrivateMethod("FromCSV", null);
+            }
+
             ProcessKeyInput();
 
 			TableAttribute tableAttribute = (TableAttribute) attribute;
@@ -136,7 +145,6 @@ namespace EditorGUITable
             
             columns.Add(new SelectFromFunctionColumn(sp =>
             {
-                List<Test> list = new List<Test>();
                 return new ActionCell("+", (idx) => mNewLineIndex = idx);
             },
             "New",
