@@ -104,15 +104,15 @@ namespace Consolation
 
         #region MonoBehaviour Messages
 
-        //void OnDisable()
-        //{
-        //    Application.logMessageReceivedThreaded -= HandleLogThreaded;
-        //}
-        //
-        //void OnEnable()
-        //{
-        //    Application.logMessageReceivedThreaded += HandleLogThreaded;
-        //}
+        void OnDisable()
+        {
+           Application.logMessageReceivedThreaded -= HandleLogThreaded;
+        }
+        
+        void OnEnable()
+        {
+           Application.logMessageReceivedThreaded += HandleLogThreaded;
+        }
 
         void OnGUI()
         {
