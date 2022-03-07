@@ -33,3 +33,21 @@ public abstract class ScriptableObjectDictionary<T1, T2> : ScriptableObjectTable
         return DataDictionary[id];
     }
 }
+
+// How to use Sameple Code
+
+// [CreateAssetMenu(fileName = "SampleTable", menuName = "Scriptable Object Asset/SampleTable")]
+// public class SampleTable : ScriptableObjectTable<SampleInfo>
+// {
+//      protected override int GetID(SampleInfo data)
+//      {
+//          return data.sampleID;
+//      }
+// }
+
+// [System.Serializable]
+// public class SampleInfo
+// {
+//     public int sampleID;
+//     public string sampleName;
+// }

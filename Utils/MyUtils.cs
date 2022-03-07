@@ -486,3 +486,26 @@ class RandomSequence
         return mNumbers[mIndex];
     }
 }
+
+// 유니티 Gameobject에 범용 데이터를 임시로 Get,Set 할수 있는 기능..
+public static class GeneralValue
+{
+    private static Dictionary<int, Dictionary<string, object>> mValues = new Dictionary<int, Dictionary<string, object>>();
+
+    public static void SetValue(this GameObject obj, string name, object val)
+    {
+        mValues[obj.GetInstanceID()][name] = val;
+    }
+    public static object GetValue(this GameObject obj, string name)
+    {
+        int instanceID = obj.GetInstanceID();
+        if (mValues.ContainsKey(instanceID))
+        {
+            if (mValues[instanceID].ContainsKey(name))
+            {
+                return mValues[instanceID][name];
+            }
+        }
+        return null;
+    }
+}

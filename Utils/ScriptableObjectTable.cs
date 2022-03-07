@@ -22,3 +22,17 @@ public class ScriptableObjectTable<T> : ScriptableObject
             yield return DataList[i];
     }
 }
+
+// How to use Sameple Code
+
+// [CreateAssetMenu(fileName = "SampleTable", menuName = "Scriptable Object Asset/SampleTable")]
+// public class SampleTable : ScriptableObjectTable<SampleInfo>
+// {
+// }
+
+// [System.Serializable]
+// public class SampleInfo
+// {
+//     public int sampleID;
+//     public string sampleName;
+// }

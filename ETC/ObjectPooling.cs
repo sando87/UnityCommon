@@ -2,96 +2,89 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPooling : MonoBehaviour
+public class ObjectPooling : SingletonMono<ObjectPooling>
 {
-    private const int ReserveSize = 20;
-    private static ObjectPooling _Instance = null;
-    public static ObjectPooling Instance
+    // 요청한 객체가 부족할때 추가 할당해주는 객체의 개수
+    private const int AllocCount = 10;
+    // 나중에 객체가 반환될때 해당 객체가 어느 풀링그룹인지 확인할때 사용
+    private const string PoolingGroup = "PoolingGroup";
+
+    private Dictionary<string, Transform> mObjectPool = new Dictionary<string, Transform>();
+
+    public GameObject Instantiate(string resourcesPath)
     {
-        get
+        // 요청한 객체가 할당 가능하지 확인하고 불가능 하면 추가로 객체 생성한다.
+        if(!IsAllocable(resourcesPath))
         {
-            if (_Instance == null)
-                _Instance = FindObjectOfType<ObjectPooling>();
-            return _Instance;
+            AllocObjects(resourcesPath);
         }
+
+        // Pool에서 실제 요청한 객체 하나를 빼와서 반환해준다
+        Transform obj = mObjectPool[resourcesPath].GetChild(0);
+        obj.SetParent(null);
+        obj.gameObject.SetActive(true);
+        return obj.gameObject;
     }
 
-    private Dictionary<int, Queue<ObjectPoolingable>> ObjectPool = new Dictionary<int, Queue<ObjectPoolingable>>();
-
-    public GameObject Instantiate(GameObject prefab)
+    // 요청한 객체가 할당 가능한지 여부 확인
+    private bool IsAllocable(string path)
     {
-        if(IsInstantiated(prefab))
+        if(mObjectPool.ContainsKey(path))
+        {
+            return mObjectPool[path].childCount > 0;
+        }
+        return false;
+    }
+    // 요청한 객체가 Pool에 없을경우 10개의 객체를 미리 생성
+    private bool AllocObjects(string resourcesPath)
+    {
+        // 프리팹 로딩
+        GameObject prefab = ResourcesCache.Load<GameObject>(resourcesPath);
+        if (prefab == null)
         {
             LOG.warn();
-            return null;
+            return false;
         }
 
-        int instID = prefab.GetInstanceID();
-        if(!ObjectPool.ContainsKey(instID) || ObjectPool[instID].Count <= 0)
-            CreateNewObjects(prefab);
-
-        ObjectPoolingable popObj = ObjectPool[instID].Dequeue();
-        popObj.gameObject.SetActive(true);
-        popObj.IsDead = false;
-        return popObj.gameObject;
-    }
-    public GameObject Instantiate(GameObject prefab, Transform parent)
-    {
-        if (IsInstantiated(prefab))
+        // 최초 요청시에는 그룹 관리를 위한 부모 객체 생성
+        if(!mObjectPool.ContainsKey(resourcesPath))
         {
-            LOG.warn();
-            return null;
+            GameObject newParent = new GameObject();
+            newParent.transform.SetParent(transform);
+            newParent.name = resourcesPath;
+            mObjectPool[resourcesPath] = newParent.transform;
         }
 
-        int instID = prefab.GetInstanceID();
-        if (!ObjectPool.ContainsKey(instID) || ObjectPool[instID].Count <= 0)
-            CreateNewObjects(prefab);
-
-        ObjectPoolingable popObj = ObjectPool[instID].Dequeue();
-        popObj.gameObject.SetActive(true);
-        popObj.IsDead = false;
-        popObj.transform.SetParent(parent);
-        return popObj.gameObject;
-    }
-
-    public void Destroy(GameObject obj)
-    {
-        ObjectPoolingable poolObj = obj.GetComponent<ObjectPoolingable>();
-        poolObj.IsDead = true;
-        int instID = poolObj.OriginPrefabInstanceID;
-        obj.transform.SetParent(transform);
-        obj.SetActive(false);
-        ObjectPool[instID].Enqueue(poolObj);
-    }
-
-    public void Destroy(GameObject obj, float time)
-    {
-        this.ExInvoke(time, () =>
+        // 그룹 즉 부모 객체 하위에 풀링할 실제 객체를 10개 미리 생성해 놓는다
+        Transform parentTr = mObjectPool[resourcesPath];
+        for (int i = 0; i < AllocCount; ++i)
         {
-            ObjectPoolingable poolObj = obj.GetComponent<ObjectPoolingable>();
-            poolObj.IsDead = true;
-            int instID = poolObj.OriginPrefabInstanceID;
-            obj.transform.SetParent(transform);
-            obj.SetActive(false);
-            ObjectPool[instID].Enqueue(poolObj);
-        });
-    }
-
-    private void CreateNewObjects(GameObject prefab)
-    {
-        int instID = prefab.GetInstanceID();
-        if (!ObjectPool.ContainsKey(instID))
-            ObjectPool[instID] = new Queue<ObjectPoolingable>();
-
-        for (int i = 0; i < ReserveSize; ++i)
-        {
-            ObjectPoolingable newObj = GameObject.Instantiate(prefab, transform).AddComponent<ObjectPoolingable>();
-            newObj.OriginPrefabInstanceID = instID;
-            newObj.IsDead = true;
+            GameObject newObj = GameObject.Instantiate(prefab, parentTr);
             newObj.gameObject.SetActive(false);
-            ObjectPool[instID].Enqueue(newObj);
+            newObj.SetValue(PoolingGroup, resourcesPath);
         }
+        return true;
     }
+
+    public void DestroyReturn(GameObject obj)
+    {
+        // 어느 그룹쪽으로 반환해야할지 정보를 가져옴
+        object groupID = obj.GetValue(PoolingGroup);
+        if(groupID == null)
+        {
+            //풀링 대상이 아니므로 그냥 삭제
+            LOG.warn();
+            Destroy(obj);
+        }
+
+        // 다 사용한 객체는 재활용을 위해 다시 Pool에 넣어준다
+        string resourcesPath = groupID as string;
+        Transform parentTr = mObjectPool[resourcesPath];
+        obj.transform.SetParent(parentTr);
+        obj.SetActive(false);
+    }
+
+    // 인자로 받은 객체가 프리팹상태인지 아니면 게임상에 존재하는 object인지 확인
     private bool IsInstantiated(GameObject obj)
     {
         return obj.scene.rootCount > 0;

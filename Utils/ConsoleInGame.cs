@@ -3,6 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+/// <summary>
+/// 릴리즈 빌드 후 실제 게임 플레이 환경에서 손쉽게 로그를 볼수 있게 해주는 기능
+/// 사용법: ConsoleInGame 컴포넌트를 붙힌 GameObject를 생성 후 키보드 KeyCode.BackQuote 버튼을 누르거나 디바이스를 흔들면 로그창이 토글됨
+/// Debug.Log("test log"); 를 남긴곳에 "test log"라는 메세지가 나오는것을 확인할 수 있음
+/// </summary>
+
 namespace Consolation
 {
     /// <summary>

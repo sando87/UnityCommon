@@ -13,7 +13,7 @@ using DG.Tweening;
 /// Resources/Sound/BGM 폴더 하위 오디오 파일 이름을 인자로 넣어줘야 한다.
 /// </summary>
 
-public class SoundPlayManager : SingletonMono<SoundPlayManager>
+public class SoundPlayManager : CSingletonMono<SoundPlayManager>
 {
     //배경 재생을 위한 전용 AudioSource
     [SerializeField] private AudioSource AudioSourceForBGM = null;
@@ -39,10 +39,11 @@ public class SoundPlayManager : SingletonMono<SoundPlayManager>
         set { AudioSourceForBGM.mute = value; }
     }
     // Background 볼륨 제어(주로 세팅에서 이 변수를 제어한다)
+    private float mVolumeBGM = 1;
     public float VolumeBGM
     {
-        get { return AudioSourceForBGM.volume; }
-        set { AudioSourceForBGM.volume = value; }
+        get { return mVolumeBGM; }
+        set { mVolumeBGM = value; AudioSourceForBGM.volume = mVolumeBGM; }
     }
 
     // 짧은 효과음 재생을 요청한다.
@@ -63,32 +64,40 @@ public class SoundPlayManager : SingletonMono<SoundPlayManager>
 
     // 배경음악을 재생한다.(Fade in)
     // clipname 은 Resources/Sound/BGM 폴더 하위의 오디오파일(mp3, wav 등등)의 이름을 넣어줘야 한다.
-    public void PlayBGM(string clipname)
+    public void PlayBGM(string clipname, float fadeInSec = 0)
     {
         string fullname = "Sound/BGM/" + clipname;
         AudioClip clip = GetClip(fullname);
-        PlayBGM(clip);
+        PlayBGM(clip, fadeInSec);
     }
     
-    public void PlayBGM(AudioClip clip)
+    public void PlayBGM(AudioClip clip, float fadeInSec = 0)
     {
-        //float targetVolume = AudioSourceForBGM.volume;
-        AudioSourceForBGM.clip = clip;
-        AudioSourceForBGM.loop = true;
-        //AudioSourceForBGM.volume = 0;
-        AudioSourceForBGM.Play();
-        //AudioSourceForBGM.DOFade(targetVolume, 3);
+        if(fadeInSec > 0)
+        {
+            AudioSourceForBGM.clip = clip;
+            AudioSourceForBGM.loop = true;
+            AudioSourceForBGM.volume = 0;
+            AudioSourceForBGM.Play();
+            AudioSourceForBGM.DOFade(mVolumeBGM, fadeInSec);
+        }
+        else
+        {
+            AudioSourceForBGM.clip = clip;
+            AudioSourceForBGM.loop = true;
+            AudioSourceForBGM.volume = mVolumeBGM;
+            AudioSourceForBGM.Play();
+        }
     }
 
     // 배경음악 멈춤(Fade out)
-    public void StopBGM(bool fadeout = false)
+    public void StopBGM(float fadeoutSec = 0)
     {
-        if(fadeout)
+        if(fadeoutSec > 0)
         {
-            float oriVolume = AudioSourceForBGM.volume;
-            AudioSourceForBGM.DOFade(0, 0.5f).OnComplete(() =>
+            AudioSourceForBGM.DOFade(0, fadeoutSec).OnComplete(() =>
             {
-                AudioSourceForBGM.volume = oriVolume;
+                AudioSourceForBGM.volume = mVolumeBGM;
                 AudioSourceForBGM.Stop();
             });
         }

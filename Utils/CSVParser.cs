@@ -5,6 +5,24 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 
+/// <summary>
+/// CSV형태의 데이터파일 파싱한다
+/// <사용법 예>
+/// test.csv 파일
+/// index, name, age
+/// 0, kim, 20
+/// 1, lee, 22
+/// 2, park, 23
+/// [System.Serializable]
+/// public class Person
+/// {
+///     public int index;
+///     public string name;
+///     public int age;
+/// }
+/// Person[] persons = CSVReader.Deserialize(',', csvStringText);
+/// </summary>
+ 
 //csv 파일을 바로 구조체 형태까지 파싱해준다.
 public class CSVParser<TEntity>//where TEntity : class
 {
