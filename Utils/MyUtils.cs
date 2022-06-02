@@ -4,10 +4,72 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+
+#if UNITY_EDITOR
+
+using UnityEditor;
+using UnityEditor.Animations;
+
+#endif
+
+
+
+// Util Class ================================================
+class RandomSequence
+{
+    // 0 ~ maxValue사이의 랜덤값을 겹치지 않게 반환
+
+    private int[] mNumbers = null;
+    private int mIndex = 0;
+    public RandomSequence(int maxValue)
+    {
+        System.Random ran = new System.Random();
+        List<int> values = new List<int>();
+        for (int i = 0; i <= maxValue; ++i)
+            values.Add(i);
+        values.Sort((a, b) => { return ran.Next(-1, 1); });
+        mNumbers = values.ToArray();
+        mIndex = 0;
+    }
+    public int GetNext()
+    {
+        mIndex = (mIndex + 1) % mNumbers.Length;
+        return mNumbers[mIndex];
+    }
+}
+
+// 유니티 Gameobject에 범용 데이터를 임시로 Get,Set 할수 있는 기능..
+public static class GeneralValue
+{
+    private static Dictionary<int, Dictionary<string, object>> mValues = new Dictionary<int, Dictionary<string, object>>();
+
+    public static void SetValue(this GameObject obj, string name, object val)
+    {
+        int key = obj.GetInstanceID();
+        if (!mValues.ContainsKey(key))
+        {
+            mValues[key] = new Dictionary<string, object>();
+        }
+
+        mValues[key][name] = val;
+    }
+    public static object GetValue(this GameObject obj, string name)
+    {
+        int instanceID = obj.GetInstanceID();
+        if (mValues.ContainsKey(instanceID))
+        {
+            if (mValues[instanceID].ContainsKey(name))
+            {
+                return mValues[instanceID][name];
+            }
+        }
+        return null;
+    }
+}
+
 
 public static class MyUtils
 {
@@ -28,6 +90,21 @@ public static class MyUtils
     static public int Sizeof<T>()
     {
         return Marshal.SizeOf(typeof(T));
+    }
+    public static string[] GetFileNames(string folderName, string ext) // ext like this... ".png" ".json" ".asset" etc...
+    {
+        List<string> filenames = new List<string>();
+        System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(folderName);
+        foreach (System.IO.FileInfo f in di.GetFiles())
+        {
+            if (f.Extension.ToLower().CompareTo(ext.ToLower()) == 0)
+            {
+                // String strInFileName = di.FullName + "\\" + f.Name;
+                string name = f.Name.Replace(f.Extension, "");
+                filenames.Add(name);
+            }
+        }
+        return filenames.ToArray();
     }
     static public byte[] Serialize(object obj)
     {
@@ -228,6 +305,15 @@ public static class MyUtils
 
     // Unity Common =====================================
 
+    // UI상의 RectTransform 영역을 World공간의 Rect로 변환.
+    public static Rect ToWorldRect(this RectTransform uiRect, Camera worldCamera)
+    {
+        Rect ret = new Rect();
+        Vector2 worldSize = ScreenRectToWorldRect(uiRect.rect.size, worldCamera);
+        ret.size = worldSize;
+        ret.center = uiRect.transform.position;
+        return ret;
+    }
     // 동일한 스크린 좌표계의 rect 정보로 UI의 위치와 크기를 배치시킨다.
     public static void SetRect(this RectTransform ui, RectTransform targetUI)
     {
@@ -278,11 +364,26 @@ public static class MyUtils
         Vector2 screenSize = SizeWorldToScreen2D(size);
         return SizeScreenToCavausScaled2D(screenSize, scaler);
     }
+    // 스크린 크기를 월드공간의 크기로 변환
+    public static Vector2 ScreenRectToWorldRect(Vector2 size, Camera mainCamera)
+    {
+        Vector3 startPos = mainCamera.ScreenToWorldPoint(Vector3.zero);
+        Vector3 endPos = mainCamera.ScreenToWorldPoint(new Vector3(size.x, size.y, 0));
+        return new Vector2(endPos.x - startPos.x, endPos.y - startPos.y);
+    }
     public static Vector3 Random(Vector3 pos, float range)
     {
         Vector3 ret = pos;
         ret.x += UnityEngine.Random.Range(-range, range);
         ret.y += UnityEngine.Random.Range(-range, range);
+        return ret;
+    }
+    public static Vector3 Random(Bounds bounds, float scaleRate = 1.0f)
+    {
+        Vector3 ret = bounds.center;
+        ret.x += UnityEngine.Random.Range(-bounds.extents.x, bounds.extents.x) * scaleRate;
+        ret.y += UnityEngine.Random.Range(-bounds.extents.y, bounds.extents.y) * scaleRate;
+        ret.z += UnityEngine.Random.Range(-bounds.extents.z, bounds.extents.z) * scaleRate;
         return ret;
     }
 
@@ -324,11 +425,11 @@ public static class MyUtils
     }
     public static bool IsPointerOverUI()
     {
-#if UNITY_EDITOR || UNITY_STANDALONE
+        #if UNITY_EDITOR || UNITY_STANDALONE
         return EventSystem.current.IsPointerOverGameObject(-1); //mouse click
-#elif UNITY_ANDROID || UNITY_IPHONE
-        return Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId); //finger touch 
-#endif
+        #elif UNITY_ANDROID || UNITY_IPHONE
+                return Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId); //finger touch 
+        #endif
     }
     public static Vector2 GetPointerScreenPosition()
     {
@@ -339,40 +440,6 @@ public static class MyUtils
 #endif
     }
 
-    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트로 반환
-    public static object GetValueFromProp(SerializedProperty property, string path)
-    {
-        System.Type parentType = property.serializedObject.targetObject.GetType();
-        System.Reflection.FieldInfo fi = parentType.GetField(path);
-        return fi.GetValue(property.serializedObject.targetObject);
-    }
-    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트값을 세팅
-    public static void SetValueToProp(SerializedProperty property, object value)
-    {
-        System.Type parentType = property.serializedObject.targetObject.GetType();
-        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);//this FieldInfo contains the type.
-        fi.SetValue(property.serializedObject.targetObject, value);
-    }
-    ////SerializedProperty 에서 실제 객체의 Type을 반환
-    public static System.Type GetTypeFromProp(SerializedProperty property)
-    {
-        System.Type parentType = property.serializedObject.targetObject.GetType();
-        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);
-        return fi.FieldType;
-    }
-    // guid값에서 실제 Asset 리소스 객체 가져옴
-    public static UnityEngine.Object GetAssetFromGUID(string guid, Type assetType)
-    {
-        string path = AssetDatabase.GUIDToAssetPath(guid);
-        return AssetDatabase.LoadAssetAtPath(path, assetType);
-    }
-    // guid값에서 실제 Asset 리소스 객체 가져옴
-    public static string GetGUIDFromAsset(UnityEngine.Object asset)
-    {
-        string path = AssetDatabase.GetAssetPath(asset);
-        string guid = AssetDatabase.AssetPathToGUID(path);
-        return guid;
-    }
     public static bool IsSubType<Tsub, Tbase>()
     {
         return typeof(Tsub).IsSubclassOf(typeof(Tbase));
@@ -380,6 +447,24 @@ public static class MyUtils
     public static bool IsSubType(Type subTyp, Type baseType)
     {
         return subTyp.IsSubclassOf(baseType);
+    }
+
+    public static Rect LimitRectMovement(this Rect targetRect, Rect limitArea)
+    {
+        Rect retArea = targetRect;
+        Vector2 cenPos = retArea.center;
+        if (retArea.width < limitArea.width)
+            cenPos.x = Mathf.Clamp(cenPos.x, limitArea.xMin + retArea.width * 0.5f, limitArea.xMax - retArea.width * 0.5f);
+        else
+            cenPos.x = limitArea.center.x;
+
+        if (retArea.height < limitArea.height)
+            cenPos.y = Mathf.Clamp(cenPos.y, limitArea.yMin + retArea.height * 0.5f, limitArea.yMax - retArea.height * 0.5f);
+        else
+            cenPos.y = limitArea.center.y;
+
+        retArea.center = cenPos;
+        return retArea;
     }
 
 
@@ -392,6 +477,28 @@ public static class MyUtils
     {
         tr.localPosition = new Vector3(val.x, val.y, tr.localPosition.z);
     }
+    public static void ExLookAtPosition(this Transform tr, Vector3 position)
+    {
+        tr.transform.right = (position - tr.position).normalized;
+        //tr.rotation = Quaternion.LookRotation((position - tr.position).normalized);
+    }
+    // public static void ExLookAtPosition(this Transform tr, Vector3 position, float degMaxStep)
+    // {
+    //     tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation((position - tr.position).normalized), degMaxStep);
+    // }
+    public static void ExLookAtDirection(this Transform tr, Vector3 direction)
+    {
+        tr.transform.right = direction.normalized;
+        //tr.rotation = Quaternion.LookRotation(direction.normalized);
+    }
+    // public static void ExLookAtDirection(this Transform tr, Vector3 direction, float degMaxStep)
+    // {
+    //     Vector3 r = tr.eulerAngles;
+    //     transform.rotation = Quaternion.Euler(r.x, r.y, Mathf.LerpAngle(direction, target, i));
+        
+    //     Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation(direction.normalized), degMaxStep).
+    //     tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation(direction.normalized), degMaxStep);
+    // }
     public static Vector2 ExToVector2(this Vector3 vec)
     {
         return new Vector2(vec.x, vec.y);
@@ -437,11 +544,11 @@ public static class MyUtils
             list[n] = val;
         }
     }
-    public static void ExInvoke(this MonoBehaviour mono, float delay, Action func)
+    public static void ExDelayedCoroutine(this MonoBehaviour mono, float delay, Action func)
     {
-        mono.StartCoroutine(CoExInvoke(func, delay));
+        mono.StartCoroutine(CoExDelayCall(func, delay));
     }
-    public static IEnumerator CoExInvoke(Action EventEnd, float delay)
+    public static IEnumerator CoExDelayCall(Action EventEnd, float delay)
     {
         yield return new WaitForSeconds(delay);
         EventEnd?.Invoke();
@@ -461,51 +568,285 @@ public static class MyUtils
         // 123,456,789 -> 123456789 로 표기
         return money.Replace(",", "");
     }
-}
-
-// Util Class ================================================
-class RandomSequence
-{
-    // 0 ~ maxValue사이의 랜덤값을 겹치지 않게 반환
-
-    private int[] mNumbers = null;
-    private int mIndex = 0;
-    public RandomSequence(int maxValue)
+    
+    public static bool IsIncludeLayer(int layer, LayerMask layermask)
     {
-        System.Random ran = new System.Random();
-        List<int> values = new List<int>();
-        for (int i = 0; i <= maxValue; ++i)
-            values.Add(i);
-        values.Sort((a, b) => { return ran.Next(-1, 1); });
-        mNumbers = values.ToArray();
-        mIndex = 0;
+        return layermask == (layermask | (1 << layer));
     }
-    public int GetNext()
-    {
-        mIndex = (mIndex + 1) % mNumbers.Length;
-        return mNumbers[mIndex];
-    }
-}
 
-// 유니티 Gameobject에 범용 데이터를 임시로 Get,Set 할수 있는 기능..
-public static class GeneralValue
-{
-    private static Dictionary<int, Dictionary<string, object>> mValues = new Dictionary<int, Dictionary<string, object>>();
-
-    public static void SetValue(this GameObject obj, string name, object val)
+    public static void Snap(this Transform tr, float step = 0.1f)
     {
-        mValues[obj.GetInstanceID()][name] = val;
+        float x = (int)((tr.position.x + (step * 0.5f)) / step) * step;
+        float y = (int)((tr.position.y + (step * 0.5f)) / step) * step;
+        // float z = (int)((tr.position.z + (step * 0.5f)) / step) * step;
+        tr.transform.position = new Vector3(x, y, tr.position.z);
     }
-    public static object GetValue(this GameObject obj, string name)
+    public static Vector3Int ToSnapIndex(Vector3 worldPos, float step = 0.1f)
     {
-        int instanceID = obj.GetInstanceID();
-        if (mValues.ContainsKey(instanceID))
+        int x = (int)((worldPos.x + (step * 0.5f)) / step);
+        int y = (int)((worldPos.y + (step * 0.5f)) / step);
+        int z = (int)((worldPos.z + (step * 0.5f)) / step);
+        return new Vector3Int(x, y, z);
+    }
+
+    public static bool RaycastFromTo(Vector3 start, Vector3 end, out RaycastHit hit, int layerMask)
+    {
+        Vector3 dir = end - start;
+        Ray ray = new Ray(start, dir);
+        return Physics.Raycast(ray, out hit, dir.magnitude, layerMask);
+    }
+    public static bool RaycastFromTo(Vector3 start, Vector3 end, int layerMask)
+    {
+        Vector3 dir = end - start;
+        Ray ray = new Ray(start, dir);
+        return Physics.Raycast(ray, dir.magnitude, layerMask);
+    }
+
+    // 실제 객체 transform에 의해 변형된 collider 전방방향의 world좌표 반환
+    public static Vector3 Center(this BoxCollider box)
+    {
+        return box.transform.TransformPoint(box.center);
+    }
+    public static Vector3 Forward(this BoxCollider box, float sizeRate = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(box.size.x * 0.5f * sizeRate, 0, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 Back(this BoxCollider box, float sizeRate = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(-box.size.x * 0.5f * sizeRate, 0, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 Up(this BoxCollider box, float sizeRate = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(0, box.size.y * 0.5f * sizeRate, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 Down(this BoxCollider box, float sizeRate = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(0, -box.size.y * 0.5f * sizeRate, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 ForwardUp(this BoxCollider box, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(box.size.x * 0.5f * sizeRateX, box.size.y * 0.5f * sizeRateY, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 ForwardDown(this BoxCollider box, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(box.size.x * 0.5f * sizeRateX, -box.size.y * 0.5f * sizeRateY, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 BackDown(this BoxCollider box, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(-box.size.x * 0.5f * sizeRateX, -box.size.y * 0.5f * sizeRateY, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+    public static Vector3 BackUp(this BoxCollider box, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        Vector3 localForwardPos = box.center + new Vector3(-box.size.x * 0.5f * sizeRateX, box.size.y * 0.5f * sizeRateY, 0);
+        return box.transform.TransformPoint(localForwardPos);
+    }
+
+    public static Bounds GetWorldBounds2D(this BoxCollider box)
+    {
+        Vector2 corner1 = box.ForwardUp();
+        Vector2 corner2 = box.BackUp();
+        Vector2 corner3 = box.ForwardDown();
+        Vector2 corner4 = box.BackDown();
+        float minX = MyUtils.Min(corner1.x, corner2.x, corner3.x, corner4.x);
+        float minY = MyUtils.Min(corner1.y, corner2.y, corner3.y, corner4.y);
+        float maxX = MyUtils.Max(corner1.x, corner2.x, corner3.x, corner4.x);
+        float maxY = MyUtils.Max(corner1.y, corner2.y, corner3.y, corner4.y);
+        Vector3 size = new Vector3(maxX - minX, maxY - minY, box.size.z);
+        Bounds bounds = new Bounds(box.Center(), size);
+        return bounds;
+    }
+    public static Vector3 Right(this Bounds bound, float sizeRate = 1.0f)
+    {
+        return bound.center += (Vector3.right * bound.extents.x * sizeRate);
+    }
+    public static Vector3 Left(this Bounds bound, float sizeRate = 1.0f)
+    {
+        return bound.center += (Vector3.left * bound.extents.x * sizeRate);
+    }
+    public static Vector3 Top(this Bounds bound, float sizeRate = 1.0f)
+    {
+        return bound.center += (Vector3.up * bound.extents.y * sizeRate);
+    }
+    public static Vector3 Bottom(this Bounds bound, float sizeRate = 1.0f)
+    {
+        return bound.center += (Vector3.down * bound.extents.y * sizeRate);
+    }
+    public static Vector3 RightTop(this Bounds bound, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        return bound.center += new Vector3(bound.extents.x * sizeRateX, bound.extents.y * sizeRateY, 0);
+    }
+    public static Vector3 LeftTop(this Bounds bound, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        return bound.center += new Vector3(-bound.extents.x * sizeRateX, bound.extents.y * sizeRateY, 0);
+    }
+    public static Vector3 RightBottom(this Bounds bound, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        return bound.center += new Vector3(bound.extents.x * sizeRateX, -bound.extents.y * sizeRateY, 0);
+    }
+    public static Vector3 LeftBottom(this Bounds bound, float sizeRateX = 1.0f, float sizeRateY = 1.0f)
+    {
+        return bound.center += new Vector3(-bound.extents.x * sizeRateX, -bound.extents.y * sizeRateY, 0);
+    }
+
+    public static bool IsCooltimeOver(long prevTicks, float cooltime)
+    {
+        double interval = new System.TimeSpan(System.DateTime.Now.Ticks - prevTicks).TotalSeconds;
+        return interval > cooltime;
+    }
+
+#if UNITY_EDITOR
+
+    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트로 반환
+    public static object GetValueFromProp(SerializedProperty property, string path)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(path);
+        return fi.GetValue(property.serializedObject.targetObject);
+    }
+    //SerializedProperty 에서 실제 객체 TYPE의 오브젝트값을 세팅
+    public static void SetValueToProp(SerializedProperty property, object value)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);//this FieldInfo contains the type.
+        fi.SetValue(property.serializedObject.targetObject, value);
+    }
+    ////SerializedProperty 에서 실제 객체의 Type을 반환
+    public static System.Type GetTypeFromProp(SerializedProperty property)
+    {
+        System.Type parentType = property.serializedObject.targetObject.GetType();
+        System.Reflection.FieldInfo fi = parentType.GetField(property.propertyPath);
+        return fi.FieldType;
+    }
+    // guid값에서 실제 Asset 리소스 객체 가져옴
+    public static UnityEngine.Object GetAssetFromGUID(string guid, Type assetType)
+    {
+        string path = AssetDatabase.GUIDToAssetPath(guid);
+        return AssetDatabase.LoadAssetAtPath(path, assetType);
+    }
+    // guid값에서 실제 Asset 리소스 객체 가져옴
+    public static string GetGUIDFromAsset(UnityEngine.Object asset)
+    {
+        string path = AssetDatabase.GetAssetPath(asset);
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        return guid;
+    }
+
+    public static string[] GetStateNames(this Animator animator, int layerIndex)
+    {
+        List<string> names = new List<string>();
+        AnimatorController ac = animator.runtimeAnimatorController as AnimatorController;
+        AnimatorStateMachine sm = ac.layers[layerIndex].stateMachine;
+        ChildAnimatorState[] states = sm.states;
+        foreach (ChildAnimatorState s in states)
         {
-            if (mValues[instanceID].ContainsKey(name))
-            {
-                return mValues[instanceID][name];
-            }
+            names.Add(s.state.name);
         }
-        return null;
+        return names.ToArray();
+    }
+
+#endif
+
+
+    public static int Min(params int[] values)
+    {
+        int retVal = int.MaxValue;
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (values[i] < retVal)
+                retVal = values[i];
+        }
+        return retVal;
+    }
+    public static int Max(params int[] values)
+    {
+        int retVal = int.MinValue;
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (values[i] > retVal)
+                retVal = values[i];
+        }
+        return retVal;
+    }
+    public static float Min(params float[] values)
+    {
+        float retVal = float.MaxValue;
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (values[i] < retVal)
+                retVal = values[i];
+        }
+        return retVal;
+    }
+    public static float Max(params float[] values)
+    {
+        float retVal = float.MinValue;
+        for (int i = 0; i < values.Length; i++)
+        {
+            if (values[i] > retVal)
+                retVal = values[i];
+        }
+        return retVal;
+    }
+
+    // 특정 타겟을 바라보는 방향으로 천천히 방향 전환, 유도탄 같은 궤적에서 사용(rotate 회전 lerp toward) - 3D용
+    // Quaternion기반, 순수 Vector3 회전 기반, 2D기반(x,y축사용)
+    public static IEnumerator CoRotateTowardsLerp(Transform me, Transform target, float rotateSpeed)
+    {
+        Vector3 lastTargetPos = Vector3.zero;
+        while (true)
+        {
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
+            Vector3 targetDirection = curTargetPos - me.transform.position;
+            lastTargetPos = curTargetPos;
+            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+            me.transform.rotation = Quaternion.RotateTowards(me.transform.rotation, targetRotation, Time.deltaTime * rotateSpeed);
+            yield return null;
+        }
+    }
+    public static IEnumerator CoRotateTowardsVectorLerp(Transform me, Transform target, float rotateSpeed)
+    {
+        Vector3 lastTargetPos = Vector3.zero;
+        while (true)
+        {
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
+            Vector3 targetDirection = curTargetPos - me.transform.position;
+            lastTargetPos = curTargetPos;
+            float singleStep = rotateSpeed * Time.deltaTime;
+            Vector3 newDirection = Vector3.RotateTowards(me.transform.forward, targetDirection, singleStep, 0.0f);
+            Debug.DrawRay(me.transform.position, newDirection, Color.red);
+            me.transform.rotation = Quaternion.LookRotation(newDirection);
+            yield return null;
+        }
+    }
+    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed)
+    {
+        Vector3 lastTargetPos = Vector3.zero;
+        while (true)
+        {
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
+            Vector3 targetDirection = curTargetPos - me.transform.position;
+            lastTargetPos = curTargetPos;
+            float singleStep = rotateSpeed * Time.deltaTime;
+            Vector3 newDirection = Vector3.RotateTowards(me.transform.right, targetDirection, singleStep, 0.0f);
+
+            Debug.DrawRay(me.transform.position, newDirection, Color.red);
+
+            float degree = Vector3.SignedAngle(newDirection, Vector3.right, Vector3.back);
+            me.transform.rotation = Quaternion.Euler(0, 0, degree);
+            yield return null;
+        }
     }
 }
+// MyUtils End =================================================
+
+
+
+
+

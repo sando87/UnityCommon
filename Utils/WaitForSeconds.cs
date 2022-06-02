@@ -5,6 +5,7 @@ using UnityEngine;
 public class newWaitForSeconds
 {
     private static Dictionary<int, YieldInstruction> mTable = new Dictionary<int, YieldInstruction>();
+    
     // new WaitforSeconds 객체를 매번 생성하지않고 재사용하도록 관리한다.
     public static YieldInstruction Cache(float second)
     {

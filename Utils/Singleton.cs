@@ -4,17 +4,17 @@ using UnityEngine;
 
 public class Singleton<T> where T : new()
 {
-    private static T mInst;
+    private static T mInstance;
     
-    public static T Inst 
+    public static T Instance 
     {
         get 
         {
-            if (mInst == null)
+            if (mInstance == null)
             {
-                mInst = new T();
+                mInstance = new T();
             }
-            return mInst;
+            return mInstance;
         }
     }
 }

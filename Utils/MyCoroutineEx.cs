@@ -6,20 +6,20 @@ public static class MyCoroutineEx
 {
     public static void CoKillAll(this Transform comp)
     {
-        MyCoroutineManager.Inst.StopMyCoroutine(comp);
+        MyCoroutineManager.Instance.StopMyCoroutine(comp);
     }
     public static void CoKill(this Transform comp, Coroutine coroutine)
     {
-        MyCoroutineManager.Inst.StopMyCoroutine(comp, coroutine);
+        MyCoroutineManager.Instance.StopMyCoroutine(comp, coroutine);
     }
     public static void CoKill(this Transform comp, string coroutineName)
     {
-        MyCoroutineManager.Inst.StopMyCoroutine(comp, coroutineName);
+        MyCoroutineManager.Instance.StopMyCoroutine(comp, coroutineName);
     }
 
     public static Coroutine CoMoveTo(this Transform comp, Vector3 dest, float duration, Action end = null, string name = "")
     {
-        return MyCoroutineManager.Inst.StartMyCoroutine(comp, MoveTest(comp, dest, duration, end), name);
+        return MyCoroutineManager.Instance.StartMyCoroutine(comp, MoveTest(comp, dest, duration, end), name);
     }
 
     public static IEnumerator MoveTest(Transform obj, Vector3 dest, float duration, Action EventEnd = null)

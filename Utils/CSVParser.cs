@@ -23,6 +23,7 @@ using UnityEngine;
 /// Person[] persons = CSVReader.Deserialize(',', csvStringText);
 /// </summary>
  
+
 //csv 파일을 바로 구조체 형태까지 파싱해준다.
 public class CSVParser<TEntity>//where TEntity : class
 {
@@ -133,7 +134,9 @@ public class CSVParser<TEntity>//where TEntity : class
         // Field 타입의 base클래스가 UnityEngine.Object일 경우 guid로 변환된다
         if (MyUtils.IsSubType(objType, typeof(UnityEngine.Object)))
         {
+#if UNITY_EDITOR
             result = MyUtils.GetGUIDFromAsset(value as UnityEngine.Object);
+#endif
         }
         else
         {
@@ -163,7 +166,9 @@ public class CSVParser<TEntity>//where TEntity : class
         // Field 타입의 base클래스가 UnityEngine.Object일 경우 guid정보에 맞는 실제 객체를 찾는다
         if (MyUtils.IsSubType(objType, typeof(UnityEngine.Object)))
         {
+#if UNITY_EDITOR
             result = MyUtils.GetAssetFromGUID(data, objType);
+#endif
         }
         else
         {

@@ -8,18 +8,48 @@ using UnityEngine;
 /// 사용법) SomethingManager.Inst.DoSomething();
 /// </summary>
 
-public class SingletonMono<T> : MonoBehaviour
+public class SingletonMono<T> : MonoBehaviour where T : MonoBehaviour
 {
-    public static T Inst { get; private set; }
-
-    void Awake()
-    {
-        if(Inst == null)
+    private static T mInstance;
+    public static T Instance
+    { 
+        get
         {
-            Inst = GetComponent<T>();
+            if (mInstance == null)
+            {
+                //Scene상에 이미 매니저가 존재하고 있을 경우 참조(참고로 Disable된 상태의 객체는 검색 안됨)
+                mInstance = FindObjectOfType<T>();
+
+                if (mInstance == null)
+                {
+                    //Prefab상태로 있을경우 로딩후 객체화 하여 참조
+                    T[] prefabs = Resources.LoadAll<T>("");
+                    if (prefabs != null && prefabs.Length > 0)
+                        mInstance = Instantiate(prefabs[0]);
+                }
+
+                if (mInstance == null)
+                {
+                    //Scene상에 없을경우 객채 생성 후 참조
+                    mInstance = new GameObject().AddComponent<T>();
+                    mInstance.name = typeof(T).Name;
+                }
+
+                DontDestroyOnLoad(mInstance.gameObject);
+            }
+            return mInstance;
+        }
+    }
+
+    protected virtual void Awake()
+    {
+        T current = this as T;
+        if(mInstance == null)
+        {
+            mInstance = current;
             DontDestroyOnLoad(gameObject);
         }
-        else
+        else if(mInstance != current)
         {
             // 싱글톤 객체가 두번 생성되었으니 해제
             Destroy(gameObject);

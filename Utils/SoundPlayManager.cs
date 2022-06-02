@@ -13,14 +13,18 @@ using DG.Tweening;
 /// Resources/Sound/BGM 폴더 하위 오디오 파일 이름을 인자로 넣어줘야 한다.
 /// </summary>
 
-public class SoundPlayManager : CSingletonMono<SoundPlayManager>
+public class SoundPlayManager : SingletonMono<SoundPlayManager>
 {
+    private const int PoolCount = 20;
+
     //배경 재생을 위한 전용 AudioSource
-    [SerializeField] private AudioSource AudioSourceForBGM = null;
+    private AudioSource mAudioSourceForBGM = null;
+
     //SFX 재생을 위한 AudioSource Pool Root
-    [SerializeField] private Transform AudioSourcePool = null;
+    private Transform mAudioSourcePool = null;
+
     //SFX 재생중인 AudioSource Root
-    [SerializeField] private Transform AudioSourceUsing = null;
+    private Transform mAudioSourceUsing = null;
 
     // 오디오클립 캐시
     private Dictionary<string, AudioClip> mAudioClips = new Dictionary<string, AudioClip>();
@@ -30,20 +34,49 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
 
     // SFX 음소거 제어(주로 세팅에서 이 변수를 제어한다)
     public bool IsMuteSFX { get; set; } = false;
+    
     // SFX 볼륨 제어(주로 세팅에서 이 변수를 제어한다)
-    public float VolumeSFX { get; set; } = 1;
+    public float VolumeSFX { get; set; } = 0.4f;
+    
     // Background 음소거 제어(주로 세팅에서 이 변수를 제어한다)
     public bool IsMuteBGM
     {
-        get { return AudioSourceForBGM.mute; }
-        set { AudioSourceForBGM.mute = value; }
+        get { return mAudioSourceForBGM.mute; }
+        set { mAudioSourceForBGM.mute = value; }
     }
     // Background 볼륨 제어(주로 세팅에서 이 변수를 제어한다)
     private float mVolumeBGM = 1;
     public float VolumeBGM
     {
         get { return mVolumeBGM; }
-        set { mVolumeBGM = value; AudioSourceForBGM.volume = mVolumeBGM; }
+        set { mVolumeBGM = value; mAudioSourceForBGM.volume = mVolumeBGM; }
+    }
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        InitSoundPlayManager();
+    }
+
+    // 사운드 플레이 매니저 초기화
+    private void InitSoundPlayManager()
+    {
+        Debug.Log("InitSoundPlayManager() initialized");
+
+        // 사운드 재생기 폴링을 위한 기본 구조 초기화
+        mAudioSourceForBGM = gameObject.AddComponent<AudioSource>();
+        mAudioSourceUsing = new GameObject("AudioSourceUsing").transform;
+        mAudioSourceUsing.SetParent(transform);
+        mAudioSourcePool = new GameObject("AudioSourcePool").transform;
+        mAudioSourcePool.SetParent(transform);
+        for (int i = 0; i < PoolCount; ++i)
+        {
+            GameObject child = new GameObject("AudioSource" + i);
+            child.transform.SetParent(mAudioSourcePool);
+            child.AddComponent<AudioSource>();
+            child.SetActive(false);
+        }
     }
 
     // 짧은 효과음 재생을 요청한다.
@@ -58,7 +91,43 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
         string fullname = "Sound/SFX/" + clipname;
         if (!mPlaylist.ContainsKey(fullname))
         {
-            mPlaylist[fullname] = GetClip(fullname);
+            AudioClip clip = GetClip(fullname);
+            if(clip != null)
+            {
+                mPlaylist[fullname] = clip;
+            }
+        }
+    }
+    
+    public void PlayUISFX(string clipname)
+    {
+        if (IsMuteSFX)
+            return;
+
+        string fullname = "Sound/SFX/UI/" + clipname;
+        if (!mPlaylist.ContainsKey(fullname))
+        {
+            AudioClip clip = GetClip(fullname);
+            if(clip != null)
+            {
+                mPlaylist[fullname] = clip;
+            }
+        }
+    }
+    
+    public void PlayInGameSFX(string clipname)
+    {
+        if (IsMuteSFX || clipname.Length <= 0)
+            return;
+
+        string fullname = Consts.SFXPath + clipname;
+        if (!mPlaylist.ContainsKey(fullname))
+        {
+            AudioClip clip = GetClip(fullname);
+            if (clip != null)
+            {
+                mPlaylist[fullname] = clip;
+            }
         }
     }
 
@@ -68,25 +137,28 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
     {
         string fullname = "Sound/BGM/" + clipname;
         AudioClip clip = GetClip(fullname);
-        PlayBGM(clip, fadeInSec);
+        if (clip != null)
+        {
+            PlayBGM(clip, fadeInSec);
+        }
     }
     
     public void PlayBGM(AudioClip clip, float fadeInSec = 0)
     {
         if(fadeInSec > 0)
         {
-            AudioSourceForBGM.clip = clip;
-            AudioSourceForBGM.loop = true;
-            AudioSourceForBGM.volume = 0;
-            AudioSourceForBGM.Play();
-            AudioSourceForBGM.DOFade(mVolumeBGM, fadeInSec);
+            mAudioSourceForBGM.clip = clip;
+            mAudioSourceForBGM.loop = true;
+            mAudioSourceForBGM.volume = 0;
+            mAudioSourceForBGM.Play();
+            mAudioSourceForBGM.DOFade(mVolumeBGM, fadeInSec);
         }
         else
         {
-            AudioSourceForBGM.clip = clip;
-            AudioSourceForBGM.loop = true;
-            AudioSourceForBGM.volume = mVolumeBGM;
-            AudioSourceForBGM.Play();
+            mAudioSourceForBGM.clip = clip;
+            mAudioSourceForBGM.loop = true;
+            mAudioSourceForBGM.volume = mVolumeBGM;
+            mAudioSourceForBGM.Play();
         }
     }
 
@@ -95,43 +167,49 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
     {
         if(fadeoutSec > 0)
         {
-            AudioSourceForBGM.DOFade(0, fadeoutSec).OnComplete(() =>
+            mAudioSourceForBGM.DOFade(0, fadeoutSec).OnComplete(() =>
             {
-                AudioSourceForBGM.volume = mVolumeBGM;
-                AudioSourceForBGM.Stop();
+                mAudioSourceForBGM.volume = mVolumeBGM;
+                mAudioSourceForBGM.Stop();
             });
         }
         else
         {
-            AudioSourceForBGM.Stop();
+            mAudioSourceForBGM.Stop();
         }
     }
+
     // 배경음악 일시정지
     public void PauseBGMMusic()
     {
-        AudioSourceForBGM.Pause();
+        mAudioSourceForBGM.Pause();
     }
+
     // 배경음악 재개
     public void ResumeBGMMusic()
     {
-        AudioSourceForBGM.UnPause();
+        mAudioSourceForBGM.UnPause();
     }
 
     // AudioSource를 Pool에서 꺼낸다(자체 풀 사용)
     private AudioSource GetAudioSourceFromPool()
     {
-        Transform target = AudioSourcePool.GetChild(0);
+        if(mAudioSourcePool.childCount <= 0)
+            return null;
+
+        Transform target = mAudioSourcePool.GetChild(0);
         target.gameObject.SetActive(true);
-        target.SetParent(AudioSourceUsing);
+        target.SetParent(mAudioSourceUsing);
         AudioSource src = target.GetComponent<AudioSource>();
         src.Stop();
         return src;
     }
+
     // 사용된 AudioSource를 Pool로 반납한다(자체 풀 사용)
     private void ReturnAudioSourceToPool(AudioSource source)
     {
         source.Stop();
-        source.transform.SetParent(AudioSourcePool);
+        source.transform.SetParent(mAudioSourcePool);
         source.gameObject.SetActive(false);
     }
 
@@ -167,13 +245,16 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
             // 오디오 클립과 그걸 재생할 플레이어(AudioSource)를 Pool에서 할당받아 재생한다.
             AudioClip clip = playlist.Value;
             AudioSource player = GetAudioSourceFromPool();
+            if(player == null)
+                break;
+                
             player.clip = clip;
             player.volume = VolumeSFX;
             player.Play();
 
             // 사운드 클립이 모두 재생되면(length초 뒤에) 플레이어(AudioSource) 자동 반납
             float length = clip.length;
-            this.ExInvoke(length, () =>
+            this.ExDelayedCoroutine(length, () =>
             {
                 player.clip = null;
                 ReturnAudioSourceToPool(player);
@@ -182,7 +263,4 @@ public class SoundPlayManager : CSingletonMono<SoundPlayManager>
 
         mPlaylist.Clear();
     }
-
-    
-
 }

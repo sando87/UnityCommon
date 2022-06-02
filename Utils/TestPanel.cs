@@ -11,7 +11,7 @@ public class TestPanel : MonoBehaviour
     private bool mIsShow = true;
     private GUIStyle mGuiStyle = null;
 
-    void Awake()
+    void Awake() 
     {
         DontDestroyOnLoad(this.gameObject);
     }
@@ -19,7 +19,7 @@ public class TestPanel : MonoBehaviour
     void Update()
     {
         // '='누르면 테스트 패널 사라짐
-        if (Input.GetKeyDown(KeyCode.Equals))
+        if(Input.GetKeyDown(KeyCode.Equals))
         {
             mIsShow = !mIsShow;
         }
@@ -27,9 +27,9 @@ public class TestPanel : MonoBehaviour
 
     void OnGUI()
     {
-        if (!mIsShow) return;
+        if(!mIsShow) return;
 
-        if (mGuiStyle == null)
+        if(mGuiStyle == null)
         {
             mGuiStyle = new GUIStyle(GUI.skin.button);
             mGuiStyle.fontSize = 30;

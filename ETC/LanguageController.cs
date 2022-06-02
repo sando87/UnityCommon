@@ -72,13 +72,13 @@ public class LanguageController : Singleton<LanguageController>
     // 언어 리스트 리턴
     public static List<Dictionary<string, object>> GetLanguageList()
     {
-        return Inst._GetLanguageList();
+        return Instance._GetLanguageList();
     }
 
     // 랭귀지 파일 읽어옴.
     public static void LoadFromFile()
     {
-        Inst._LoadFromFile();
+        Instance._LoadFromFile();
     }
 
     // 디바이스 체크
@@ -133,7 +133,7 @@ public class LanguageController : Singleton<LanguageController>
             if(strValue.Equals("Chinese"))
             {
                 Debug.Log("GMS - 중국어 strValue = " + strValue);
-                strValue = Inst.GetLanguageCodeForChinese();
+                strValue = Instance.GetLanguageCodeForChinese();
                 Debug.Log("GMS - 중국어 strValue = " + strValue);
             }
 
@@ -152,7 +152,7 @@ public class LanguageController : Singleton<LanguageController>
         LanguageType previousLang = GamePlayData.UserSaveData.Language;
         GamePlayData.UserSaveData.Language = language;
 
-        Inst.EventLanguageChanged?.Invoke(previousLang, language);
+        Instance.EventLanguageChanged?.Invoke(previousLang, language);
     }
 
     // 중국어인 경우 간체인지 번체인지 확인해서 리턴
@@ -233,7 +233,7 @@ public class LanguageController : Singleton<LanguageController>
         if (i_textCode > 0)
         {
             // 코드를 통해서 현재 언어에 맞는 텍스트를 받아옴
-            return Inst.GetTextByCode(i_textCode);
+            return Instance.GetTextByCode(i_textCode);
         }
 
         return textWord;

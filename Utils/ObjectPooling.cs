@@ -16,7 +16,8 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
         // 요청한 객체가 할당 가능하지 확인하고 불가능 하면 추가로 객체 생성한다.
         if(!IsAllocable(resourcesPath))
         {
-            AllocObjects(resourcesPath);
+            if(!AllocObjects(resourcesPath))
+                return null;
         }
 
         // Pool에서 실제 요청한 객체 하나를 빼와서 반환해준다
@@ -24,6 +25,28 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
         obj.SetParent(null);
         obj.gameObject.SetActive(true);
         return obj.gameObject;
+    }
+
+    public GameObject Instantiate(string resourcesPath, Vector3 position, Quaternion rotation, Transform parent = null)
+    {
+        GameObject obj = Instantiate(resourcesPath);
+        if(obj == null)
+        {
+            return null;
+        }
+        
+        obj.transform.position = position;
+        obj.transform.rotation = rotation;
+        obj.transform.SetParent(parent);
+        return obj;
+    }
+
+    public GameObject InstantiateVFX(string prefabNameInVFXPath, Vector3 position, Quaternion rotation, Transform parent = null)
+    {
+        if(prefabNameInVFXPath.Length <= 0)
+            return null;
+
+        return Instantiate(Consts.VFXPath + prefabNameInVFXPath, position, rotation, parent);
     }
 
     // 요청한 객체가 할당 가능한지 여부 확인
@@ -84,9 +107,31 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
         obj.SetActive(false);
     }
 
+    public void DestroyReturnAfter(GameObject obj, float delay)
+    {
+        if(delay <= 0)
+        {
+            DestroyReturn(obj);
+        }
+        else
+        {
+            this.ExDelayedCoroutine(delay, () => DestroyReturn(obj));
+        }
+    }
+
     // 인자로 받은 객체가 프리팹상태인지 아니면 게임상에 존재하는 object인지 확인
     private bool IsInstantiated(GameObject obj)
     {
         return obj.scene.rootCount > 0;
+    }
+}
+
+public static class ObjectPoolingHelper
+{
+    public static GameObject ReturnAfter(this GameObject obj, float delay = 0)
+    {
+        if(obj == null) return null;
+        ObjectPooling.Instance.DestroyReturnAfter(obj, delay);
+        return obj;
     }
 }
