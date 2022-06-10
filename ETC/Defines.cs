@@ -74,6 +74,7 @@ public class AnimParam
     public static readonly int IsHangingRight = Animator.StringToHash("IsHangingRight");
     public static readonly int IsSitDown = Animator.StringToHash("IsSitDown");
     public static readonly int IsRun = Animator.StringToHash("IsRun");
+    public static readonly int VerticalDegreeIndex = Animator.StringToHash("motionB_Num");
 }
 
 public enum AnimActionID

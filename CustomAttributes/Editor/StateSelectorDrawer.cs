@@ -13,6 +13,7 @@ public class StateSelectorDrawer : PropertyDrawer
 {
     string[] stateNameList = null;
     string[] animClipList = null;
+    float[] animClipLengthList = null;
     int[] layerIdxList = null;
     int[] actionIDList = null;
     int idx = 0;
@@ -23,13 +24,14 @@ public class StateSelectorDrawer : PropertyDrawer
             base.OnGUI(position, property, label);
         else
         {
-            AnimatorController ac = (AnimatorController)AssetDatabase.LoadAssetAtPath("Assets/00_MetaSuit/03_Animation/Man_Controller_Base.controller", typeof(AnimatorController));
+            AnimatorController ac = (AnimatorController)AssetDatabase.LoadAssetAtPath("Assets/Anims/_common/UserUnitAnimBase.controller", typeof(AnimatorController));
             if(ac != null)
             {
                 if(stateNameList == null)
                 {
                     List<string> names = new List<string>();
                     List<string> clips = new List<string>();
+                    List<float> clipLengths = new List<float>();
                     List<int> actionIDs = new List<int>();
                     List<int> layerIndicies = new List<int>();
 
@@ -41,6 +43,7 @@ public class StateSelectorDrawer : PropertyDrawer
                         {
                             names.Add(tr.destinationState.name);
                             clips.Add(tr.destinationState.motion.name);
+                            clipLengths.Add(tr.destinationState.motion.averageDuration);
                             layerIndicies.Add(layerIndex);
 
                             foreach (var condi in tr.conditions)
@@ -57,6 +60,7 @@ public class StateSelectorDrawer : PropertyDrawer
 
                     stateNameList = names.ToArray();
                     animClipList = clips.ToArray();
+                    animClipLengthList = clipLengths.ToArray();
                     actionIDList = actionIDs.ToArray();
                     layerIdxList = layerIndicies.ToArray();
                     idx = 0;
@@ -76,6 +80,7 @@ public class StateSelectorDrawer : PropertyDrawer
                         property.serializedObject.FindProperty("AnimationClipName").stringValue = animClipList[idx];
                         property.serializedObject.FindProperty("MotionName").stringValue = property.serializedObject.targetObject.GetType().ToString();
                         property.serializedObject.FindProperty("LayerIndex").intValue = layerIdxList[idx];
+                        property.serializedObject.FindProperty("ClipLength").floatValue = animClipLengthList[idx];
                     }
                 }
             }
