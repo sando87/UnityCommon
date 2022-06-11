@@ -48,8 +48,7 @@ public class StateSelectorDrawer : PropertyDrawer
 
                             foreach (var condi in tr.conditions)
                             {
-                                if (Animator.StringToHash(condi.parameter) == AnimParam.ActionType
-                                 || Animator.StringToHash(condi.parameter) == AnimParam.HandType)
+                                if (Animator.StringToHash(condi.parameter) == AnimParam.ActionType)
                                 {
                                     actionIDs.Add((int)condi.threshold);
                                     break;
