@@ -595,6 +595,12 @@ public static class MyUtils
         Ray ray = new Ray(start, dir);
         return Physics.Raycast(ray, out hit, dir.magnitude, layerMask);
     }
+    public static RaycastHit[] RaycastAllFromTo(Vector3 start, Vector3 end, int layerMask)
+    {
+        Vector3 dir = end - start;
+        Ray ray = new Ray(start, dir);
+        return Physics.RaycastAll(ray, dir.magnitude, layerMask);
+    }
     public static bool RaycastFromTo(Vector3 start, Vector3 end, int layerMask)
     {
         Vector3 dir = end - start;
