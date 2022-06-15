@@ -25,6 +25,18 @@ public class ScriptableObjectTable<T> : ScriptableObject
 // [CreateAssetMenu(fileName = "SampleTable", menuName = "Scriptable Object Asset/SampleTable")]
 // public class SampleTable : ScriptableObjectTable<SampleInfo>
 // {
+//      private static SampleTable mInst = null;
+//      public static SampleTable Inst
+//      {
+//          get
+//          {
+//              if (mInst == null)
+//              {
+//                  mInst = Resources.Load<SampleTable>("Database/SampleTable");
+//              }
+//              return mInst;
+//          }
+//      }
 // }
 
 // [System.Serializable]
