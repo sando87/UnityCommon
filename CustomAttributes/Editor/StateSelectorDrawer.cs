@@ -20,7 +20,7 @@ public class StateSelectorDrawer : PropertyDrawer
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
-        if (property.propertyType != SerializedPropertyType.String)
+        if (property.propertyType != SerializedPropertyType.Generic)
             base.OnGUI(position, property, label);
         else
         {
@@ -65,7 +65,8 @@ public class StateSelectorDrawer : PropertyDrawer
                     idx = 0;
                 }
 
-                idx = GetIndex(property.stringValue);
+                string currentStateName = property.serializedObject.FindProperty("AnimState.StateName").stringValue;
+                idx = GetIndex(currentStateName);
 
                 EditorGUI.BeginChangeCheck();
                 idx = EditorGUI.Popup(position, label.text, idx, stateNameList);
@@ -74,12 +75,12 @@ public class StateSelectorDrawer : PropertyDrawer
                 {
                     //if(idx > 0)
                     {
-                        property.stringValue = stateNameList[idx];
-                        property.serializedObject.FindProperty("AnimatorParamActionType").intValue = actionIDList[idx];
-                        property.serializedObject.FindProperty("AnimationClipName").stringValue = animClipList[idx];
-                        property.serializedObject.FindProperty("MotionName").stringValue = property.serializedObject.targetObject.GetType().ToString();
-                        property.serializedObject.FindProperty("LayerIndex").intValue = layerIdxList[idx];
-                        property.serializedObject.FindProperty("ClipLength").floatValue = animClipLengthList[idx];
+                        property.serializedObject.FindProperty("AnimState.StateName").stringValue = stateNameList[idx];
+                        property.serializedObject.FindProperty("AnimState.AnimatorParamActionType").intValue = actionIDList[idx];
+                        property.serializedObject.FindProperty("AnimState.AnimationClipName").stringValue = animClipList[idx];
+                        property.serializedObject.FindProperty("AnimState.MotionName").stringValue = property.serializedObject.targetObject.GetType().ToString();
+                        property.serializedObject.FindProperty("AnimState.LayerIndex").intValue = layerIdxList[idx];
+                        property.serializedObject.FindProperty("AnimState.ClipLength").floatValue = animClipLengthList[idx];
                     }
                 }
             }
