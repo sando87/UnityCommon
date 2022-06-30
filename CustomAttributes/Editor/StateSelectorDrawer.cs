@@ -16,6 +16,7 @@ public class StateSelectorDrawer : PropertyDrawer
     float[] animClipLengthList = null;
     int[] layerIdxList = null;
     int[] actionIDList = null;
+    string[] enumNames = null;
     int idx = 0;
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
@@ -29,11 +30,15 @@ public class StateSelectorDrawer : PropertyDrawer
             {
                 if(stateNameList == null)
                 {
-                    List<string> names = new List<string>();
-                    List<string> clips = new List<string>();
-                    List<float> clipLengths = new List<float>();
-                    List<int> actionIDs = new List<int>();
-                    List<int> layerIndicies = new List<int>();
+                    enumNames = System.Enum.GetNames(typeof(AnimActionID));
+                    int enumCount = MyUtils.CountEnum<AnimActionID>();
+                    int[] actionIDs = new int[enumCount];
+                    for (int i = 0; i < enumCount; ++i)
+                        actionIDs[i] = -1;
+                    string[] names = new string[enumCount];
+                    string[] clips = new string[enumCount];
+                    float[] clipLengths = new float[enumCount];
+                    int[] layerIndicies = new int[enumCount];
 
                     for (int layerIndex = 0; layerIndex < ac.layers.Length; ++layerIndex)
                     {
@@ -41,35 +46,40 @@ public class StateSelectorDrawer : PropertyDrawer
                         AnimatorStateTransition[] trans = sm.anyStateTransitions;
                         foreach (AnimatorStateTransition tr in trans)
                         {
-                            names.Add(tr.destinationState.name);
-                            clips.Add(tr.destinationState.motion.name);
-                            clipLengths.Add(tr.destinationState.motion.averageDuration);
-                            layerIndicies.Add(layerIndex);
-
+                            int actionID = -1;
                             foreach (var condi in tr.conditions)
                             {
                                 if (Animator.StringToHash(condi.parameter) == AnimParam.ActionType)
                                 {
-                                    actionIDs.Add((int)condi.threshold);
+                                    actionID = (int)condi.threshold;
                                     break;
                                 }
                             }
+
+                            if(actionID < 0 || actionIDs[actionID] >= 0)
+                                continue;
+
+                            actionIDs[actionID] = (actionID);
+                            names[actionID] = (tr.destinationState.name);
+                            clips[actionID] = (tr.destinationState.motion.name);
+                            clipLengths[actionID] = (tr.destinationState.motion.averageDuration);
+                            layerIndicies[actionID] = (layerIndex);
                         }
                     }
 
-                    stateNameList = names.ToArray();
-                    animClipList = clips.ToArray();
-                    animClipLengthList = clipLengths.ToArray();
-                    actionIDList = actionIDs.ToArray();
-                    layerIdxList = layerIndicies.ToArray();
+                    stateNameList = names;
+                    animClipList = clips;
+                    animClipLengthList = clipLengths;
+                    actionIDList = actionIDs;
+                    layerIdxList = layerIndicies;
                     idx = 0;
                 }
 
-                string currentStateName = property.serializedObject.FindProperty("AnimState.StateName").stringValue;
-                idx = GetIndex(currentStateName);
+                int currentActionID = property.serializedObject.FindProperty("AnimState.AnimatorParamActionType").intValue;
+                idx = GetIndex(currentActionID);
 
                 EditorGUI.BeginChangeCheck();
-                idx = EditorGUI.Popup(position, label.text, idx, stateNameList);
+                idx = EditorGUI.Popup(position, label.text, idx, enumNames);
 
                 //if (EditorGUI.EndChangeCheck())  //Inspector창에서 콤보박스 선택시 진입
                 {
@@ -91,13 +101,13 @@ public class StateSelectorDrawer : PropertyDrawer
         }
     }
 
-    private int GetIndex(string stateName)
+    private int GetIndex(int actionID)
     {
-        if(stateNameList == null) return 0;
+        if(actionIDList == null) return 0;
 
-        for (int i = 0; i < stateNameList.Length; ++i)
+        for (int i = 0; i < actionIDList.Length; ++i)
         {
-            if (stateNameList[i].Equals(stateName))
+            if (actionIDList[i] == actionID)
                 return i;
         }
         return 0;
