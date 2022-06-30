@@ -850,11 +850,10 @@ public static class MyUtils
         }
     }
 
-    // return : -180 ~ 180 degree(시계방향은 0 ~ 180, 반시계 0 ~ -180)
+    // return : 0 ~ 180 degree
     public static float GetDegree(Vector3 dirA, Vector3 dirB)
     {
-        Vector3 v = dirB - dirA;
-        return Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
+        return Vector3.Angle(dirA, dirB);
     }
 }
 // MyUtils End =================================================
