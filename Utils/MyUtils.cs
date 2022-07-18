@@ -831,22 +831,25 @@ public static class MyUtils
             yield return null;
         }
     }
-    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed)
+    public static IEnumerator CoRotateTowards2DLerp(float delay, Transform me, Transform target, float radianPerSec)
     {
-        Vector3 lastTargetPos = Vector3.zero;
+        Vector3 targetPos = target.position;
+        yield return new WaitForSeconds(delay);
         while (true)
         {
-            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
-            Vector3 targetDirection = curTargetPos - me.transform.position;
-            lastTargetPos = curTargetPos;
-            float singleStep = rotateSpeed * Time.deltaTime;
+            if(target != null)
+                targetPos = target.position;
+
+            Vector3 targetDirection = targetPos - me.transform.position;
+            float singleStep = radianPerSec * Time.deltaTime;
             Vector3 newDirection = Vector3.RotateTowards(me.transform.right, targetDirection, singleStep, 0.0f);
 
-            Debug.DrawRay(me.transform.position, newDirection, Color.red);
+            // Debug.DrawRay(me.transform.position, newDirection, Color.red);
 
             float degree = Vector3.SignedAngle(newDirection, Vector3.right, Vector3.back);
             me.transform.rotation = Quaternion.Euler(0, 0, degree);
             yield return null;
+            radianPerSec += 0.1f;// 시간이 지남에 따라 더빠르게 방향을 튼다(무한 회전 방지)
         }
     }
 
