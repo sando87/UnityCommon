@@ -25,6 +25,10 @@ public static class MyCoroutineEx
     {
         return MyCoroutineManager.Instance.StartMyCoroutine(comp, MoveTarget(comp, target, duration, end), name);
     }
+    public static Coroutine CoMoveToSpeed(this Transform comp, Transform target, float speed, Action end = null, string name = "")
+    {
+        return MyCoroutineManager.Instance.StartMyCoroutine(comp, MoveTargetSpeed(comp, target, speed, end), name);
+    }
 
     public static IEnumerator MoveTest(Transform obj, Vector3 dest, float duration, Action EventEnd = null)
     {
@@ -52,6 +56,24 @@ public static class MyCoroutineEx
             yield return null;
             time += Time.deltaTime;
         }
+        EventEnd?.Invoke();
+    }
+    public static IEnumerator MoveTargetSpeed(Transform obj, Transform target, float speed, Action EventEnd = null)
+    {
+        Vector3 destPos = target.position;
+        while (true)
+        {
+            float ds = Time.deltaTime * speed;
+            if((obj.position - target.position).magnitude < ds)
+                break;
+
+            destPos = target != null ? target.position : destPos;
+            Vector3 dir = destPos - obj.position;
+            dir.Normalize();
+            obj.position += (dir * ds);
+            yield return null;
+        }
+        obj.position = target.position;
         EventEnd?.Invoke();
     }
 }

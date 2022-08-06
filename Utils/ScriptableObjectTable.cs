@@ -9,6 +9,7 @@ public class ScriptableObjectTable<T> : ScriptableObject
 {
     //[Table]
     [SerializeField]
+    [ReorderableTable]
     protected List<T> DataList = new List<T>();
 
     public T GetDataOfIndex(int index) { return DataList[index]; }
