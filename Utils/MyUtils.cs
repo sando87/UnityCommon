@@ -588,6 +588,15 @@ public static class MyUtils
         int z = (int)((worldPos.z + (step * 0.5f)) / step);
         return new Vector3Int(x, y, z);
     }
+    public static bool RaycastScreenToWorld(Camera worldCam, Vector2 mouseScreenPos, int layerMask, out RaycastHit hit)
+    {
+        Ray ray = worldCam.ScreenPointToRay(mouseScreenPos);
+        if(Physics.Raycast(ray, out hit, 20, layerMask))
+        {
+            return true;
+        }
+        return false;
+    }
 
     public static bool RaycastFromTo(Vector3 start, Vector3 end, out RaycastHit hit, int layerMask)
     {
