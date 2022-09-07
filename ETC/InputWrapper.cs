@@ -72,5 +72,10 @@ public class InputWrapper : SingletonMono<InputWrapper>
         Vector2 pos = mIA.InGame.PointerMoving.ReadValue<Vector2>();
         return pos;
     }
+
+    public bool IsKeyDownTrigger_F1()
+    {
+        return Keyboard.current.f1Key.wasPressedThisFrame;
+    }
 }
 
