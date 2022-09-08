@@ -11,7 +11,7 @@ using UnityEditor.Animations;
 [CustomPropertyDrawer(typeof(IdentifierAttribute))]
 public class IdentifierDrawer : PropertyDrawer
 {
-    Dictionary<long, int> mIDTable = new Dictionary<long, int>();
+    Dictionary<long, UnityEngine.Object> mIDTable = new Dictionary<long, UnityEngine.Object>();
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -19,35 +19,29 @@ public class IdentifierDrawer : PropertyDrawer
             base.OnGUI(position, property, label);
         else
         {
-            string[] pieces = property.propertyPath.Split(new char[] { '[', ']' });
-            int arrayIndex = int.Parse(pieces[1]);
-
             if (property.longValue <= 0)
             {
                 long id = DateTime.Now.Ticks;
-                mIDTable[id] = arrayIndex;
+                mIDTable[id] = property.serializedObject.targetObject;
                 property.longValue = id;
             }
             else
             {
-                if (mIDTable.ContainsKey(property.longValue))
+                if(mIDTable.ContainsKey(property.longValue))
                 {
-                    if(mIDTable[property.longValue] < arrayIndex)
+                    if(mIDTable[property.longValue] != property.serializedObject.targetObject)
                     {
                         long id = DateTime.Now.Ticks;
-                        mIDTable[id] = arrayIndex;
+                        mIDTable[id] = property.serializedObject.targetObject;
                         property.longValue = id;
-                    }
-                    else if(mIDTable[property.longValue] > arrayIndex)
-                    {
-                        mIDTable[property.longValue] = arrayIndex;
                     }
                 }
                 else
                 {
-                    mIDTable[property.longValue] = arrayIndex;
+                    mIDTable[property.longValue] = property.serializedObject.targetObject;
                 }
-            }            
+
+            }
 
             GUI.enabled = false;
             EditorGUI.PropertyField(position, property, label, true);
