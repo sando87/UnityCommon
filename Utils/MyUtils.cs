@@ -867,6 +867,11 @@ public static class MyUtils
     {
         return Vector3.Angle(dirA, dirB);
     }
+
+    public static bool IsHitPercent(float rate)
+    {
+        return (UnityEngine.Random.Range(0, 1000) % 100) < (int)(rate * 100.0f);
+    }
 }
 // MyUtils End =================================================
 
