@@ -765,6 +765,19 @@ public static class MyUtils
         }
         return names.ToArray();
     }
+    
+    // prefab으로부터 guid정보를 가져온다
+    public static string GetGUIDFromPrefab(UnityEngine.GameObject prefab)
+    {
+        string path = AssetDatabase.GetAssetPath(prefab);
+        // prefab이 prefabView 모드나 scene에 instantiate된 객체일 경우 assetPath를 반환하지 않으므로 원래 prefab asset상태의 path정보를 가져와야 한다.
+        // if(path.Length <= 0)
+        // {
+        //     path = (UnityEditor.PrefabUtility.GetCorrespondingObjectFromOriginalSource(prefab)).assetPath;
+        // }
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        return guid;
+    }
 
 #endif
 
@@ -871,6 +884,15 @@ public static class MyUtils
     public static bool IsHitPercent(float rate)
     {
         return (UnityEngine.Random.Range(0, 1000) % 100) < (int)(rate * 100.0f);
+    }
+    
+    public static long GUIDToLong(string guid)
+    {
+        long halfA = guid.Substring(0, guid.Length / 2).GetHashCode();
+        long halfB = guid.Substring(guid.Length / 2, guid.Length / 2).GetHashCode();
+        long newID = halfA | (halfB << 32);
+        newID &= ~((long)1 << 63);
+        return newID;
     }
 }
 // MyUtils End =================================================

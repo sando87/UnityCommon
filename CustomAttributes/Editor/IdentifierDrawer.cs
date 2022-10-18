@@ -11,42 +11,109 @@ using UnityEditor.Animations;
 [CustomPropertyDrawer(typeof(IdentifierAttribute))]
 public class IdentifierDrawer : PropertyDrawer
 {
-    Dictionary<long, UnityEngine.Object> mIDTable = new Dictionary<long, UnityEngine.Object>();
+    Dictionary<long, int> mIDTable = new Dictionary<long, int>();
+    static Dictionary<long, string> mIDObjectTable = new Dictionary<long, string>();
+
+    public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+    {
+        if(!Application.isPlaying && property.propertyType == SerializedPropertyType.Integer)
+        {
+            long id = property.longValue;
+            if(id != 0 && !mIDObjectTable.ContainsKey(id))
+            {
+                mIDObjectTable[id] = GetGUID(property);
+            }
+        }
+        
+        return base.GetPropertyHeight(property, label);
+    }
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
+        if(Application.isPlaying)
+        {
+            base.OnGUI(position, property, label);
+            return;
+        }
+            
         if (property.propertyType != SerializedPropertyType.Integer)
             base.OnGUI(position, property, label);
         else
         {
-            if (property.longValue <= 0)
+
+            // 필드가 배열 속성일 경우와 아닌경우로 나뉘어 처리된다.
+            if(property.name.Equals(property.propertyPath))
             {
-                long id = DateTime.Now.Ticks;
-                mIDTable[id] = property.serializedObject.targetObject;
-                property.longValue = id;
+                long newID = AssignNewID(property, property.longValue);
+                if(newID != 0)
+                {
+                    property.longValue = newID;
+                }
             }
             else
             {
-                if(mIDTable.ContainsKey(property.longValue))
+                string[] pieces = property.propertyPath.Split(new char[] { '[', ']' });
+                int arrayIndex = int.Parse(pieces[1]);
+
+                if (property.longValue <= 0)
                 {
-                    if(mIDTable[property.longValue] != property.serializedObject.targetObject)
-                    {
-                        long id = DateTime.Now.Ticks;
-                        mIDTable[id] = property.serializedObject.targetObject;
-                        property.longValue = id;
-                    }
+                    long id = DateTime.Now.Ticks;
+                    mIDTable[id] = arrayIndex;
+                    property.longValue = id;
                 }
                 else
                 {
-                    mIDTable[property.longValue] = property.serializedObject.targetObject;
+                    if (mIDTable.ContainsKey(property.longValue))
+                    {
+                        if(mIDTable[property.longValue] < arrayIndex)
+                        {
+                            long id = DateTime.Now.Ticks;
+                            mIDTable[id] = arrayIndex;
+                            property.longValue = id;
+                        }
+                        else if(mIDTable[property.longValue] > arrayIndex)
+                        {
+                            mIDTable[property.longValue] = arrayIndex;
+                        }
+                    }
+                    else
+                    {
+                        mIDTable[property.longValue] = arrayIndex;
+                    }
                 }
-
             }
 
             GUI.enabled = false;
             EditorGUI.PropertyField(position, property, label, true);
             GUI.enabled = true;
         }
+    }
+
+    public long AssignNewID(SerializedProperty property, long preID)
+    {
+        string guid = GetGUID(property);
+        if(mIDObjectTable.ContainsKey(preID))
+        {
+            if(!mIDObjectTable[preID].Equals(guid))
+            {
+                long newID = MyUtils.GUIDToLong(guid);
+                mIDObjectTable[newID] = guid;
+                return newID;
+            }
+        }
+        else
+        {
+            long newID = MyUtils.GUIDToLong(guid);
+            mIDObjectTable[newID] = guid;
+            return newID;
+        }
+        return 0;
+    }
+
+    string GetGUID(SerializedProperty property)
+    {
+        MonoBehaviour mo = property.serializedObject.targetObject as MonoBehaviour;
+        return MyUtils.GetGUIDFromPrefab(mo.gameObject);
     }
 }
 
