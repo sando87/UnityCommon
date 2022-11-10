@@ -34,10 +34,10 @@ public class TestPanel : MonoBehaviour
     void Update()
     {
         // '='누르면 테스트 패널 사라짐
-        if(Input.GetKeyDown(KeyCode.Equals))
-        {
-            mIsShow = !mIsShow;
-        }
+        // if(Input.GetKeyDown(KeyCode.Equals))
+        // {
+        //     mIsShow = !mIsShow;
+        // }
     }
 
     [Button]
