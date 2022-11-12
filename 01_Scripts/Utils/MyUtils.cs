@@ -1044,6 +1044,33 @@ public static class MyUtils
                 child.FindChildAll(name, rets);
         }
     }
+    public static Vector3 RotateVector(Vector3 vec, Vector3 axis, float degree)
+    {
+        return Quaternion.AngleAxis(degree, axis.normalized) * vec;
+    }
+    public static Vector3[] CalcMultiDirections(Vector3 centerDir, Vector3 axis, int count, float stepDegree)
+    {
+        centerDir.Normalize();
+        axis.Normalize();
+
+        if (count <= 1)
+            return new Vector3[1] { centerDir };
+
+        List<Vector3> rets = new List<Vector3>();
+        float totalDeg = stepDegree * (count - 1);
+        Vector3 startDir = RotateVector(centerDir, axis, -totalDeg * 0.5f);
+        rets.Add(startDir);
+        for (int i = 1; i < count; ++i)
+        {
+            Vector3 dir = RotateVector(startDir, axis, stepDegree * i);
+            rets.Add(dir);
+        }
+        return rets.ToArray();
+    }
+    public static bool IsCloseEnough(Vector3 posA, Vector3 posB, float distance)
+    {
+        return (posA - posB).sqrMagnitude <= (distance * distance);
+    }
 }
 
 // MyUtils End =================================================

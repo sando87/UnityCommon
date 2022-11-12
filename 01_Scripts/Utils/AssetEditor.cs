@@ -80,7 +80,7 @@ public class AssetEditor : MonoBehaviour
     static void ChangeToFlashRenderer(GameObject target, Material mat)
     {
         SpriteRenderer sr = target.GetComponentInChildren<SpriteRenderer>();
-        DestroyImmediate(sr.GetComponent<AllIn1SpriteShader.AllIn1Shader>(), true);
+        //DestroyImmediate(sr.GetComponent<AllIn1SpriteShader.AllIn1Shader>(), true);
         sr.material = mat;
     }
 

@@ -93,3 +93,13 @@
 //     public static readonly int VisibleParticles = SortingLayer.NameToID("VisibleParticles");
 //     public static readonly int UI = SortingLayer.NameToID("UI");
 // }
+
+// [System.Flags]
+// public enum InputDetectType
+// {
+//     None = 0,
+//     TriggerDown = 1 << 1, // 키를 누른 순간만 감지
+//     TriggerUp = 1 << 2, // 키를 뗀 순간만 감지
+//     KeepPressing = 1 << 3, // 키를 지속적으로 누르고 있을경우 계속 감지
+//     All = ~0,
+// }

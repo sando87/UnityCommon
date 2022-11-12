@@ -9,6 +9,15 @@ public enum InputType
 {
     None, Click, KeyA, KeyB
 }
+public enum InputDeviceType
+{
+    None = 0,
+    DualShock = 1,
+    XInput = 2,
+    Switch = 3,
+    Keyboard = 4,
+    FastKeyboard = 4,
+}
 
 public class InputWrapper : SingletonMono<InputWrapper>
 {
@@ -16,6 +25,9 @@ public class InputWrapper : SingletonMono<InputWrapper>
 
     public event Action<InputType> EventDownTriggered;
     public event Action<InputType> EventUpTriggered;
+
+    public event System.Action<InputDeviceType> EventChangedActiveDevice = null;
+    public InputDeviceType CurrentActiveDevice { get; private set; } = InputDeviceType.None;
 
     protected override void Awake()
     {
@@ -30,6 +42,34 @@ public class InputWrapper : SingletonMono<InputWrapper>
         mIA.InGame.OnClick.canceled += context => OnReleaseButton(context, InputType.Click);
         mIA.InGame.KeyA.canceled += context => OnReleaseButton(context, InputType.KeyA);
         mIA.InGame.KeyB.canceled += context => OnReleaseButton(context, InputType.KeyB);
+    }
+
+    void Start()
+    {
+        // Device가 연결이 해제되거나 새로 연결된 경우 호출됨
+        // InputSystem.onDeviceChange += (device, change) =>
+        // {
+        //     LOG.trace(device.name);
+        //     LOG.trace(change);
+        // };
+
+        // 특정 액션과 연결된 모든 버튼이 눌리거나 움직이는 등 입력이 일어날때마나 호출됨
+        InputSystem.onActionChange += (device, change) =>
+        {
+            if (change == InputActionChange.ActionPerformed)
+            {
+                InputAction inputAction = (InputAction)device;
+                InputControl lastControl = inputAction.activeControl;
+                InputDevice currentDevice = lastControl.device;
+
+                InputDeviceType deviceType = DeviceNameToType(currentDevice.name);
+                if (CurrentActiveDevice != deviceType)
+                {
+                    CurrentActiveDevice = deviceType;
+                    EventChangedActiveDevice?.Invoke(deviceType);
+                }
+            }
+        };
     }
 
     void OnEnable()
@@ -76,6 +116,21 @@ public class InputWrapper : SingletonMono<InputWrapper>
     public bool IsKeyDownTrigger_F1()
     {
         return Keyboard.current.f1Key.wasPressedThisFrame;
+    }
+
+    private InputDeviceType DeviceNameToType(string deviceName)
+    {
+        if (deviceName.Contains("Keyboard"))
+            return InputDeviceType.Keyboard;
+        else if (deviceName.Contains("DualShock"))
+            return InputDeviceType.DualShock;
+        else if (deviceName.Contains("XInput"))
+            return InputDeviceType.XInput;
+        else if (deviceName.Contains("Mouse"))
+            return InputDeviceType.None;
+
+        LOG.warn("No Matching DeviceName : " + deviceName);
+        return InputDeviceType.None;
     }
 }
 
