@@ -7,11 +7,14 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 #if UNITY_EDITOR
 
 using UnityEditor;
 using UnityEditor.Animations;
+using UnityEditor.SceneManagement;
+using UnityEditor.Experimental.SceneManagement;
 
 #endif
 
@@ -40,6 +43,37 @@ class RandomSequence
         return mNumbers[mIndex];
     }
 }
+
+public enum DamageKind
+{
+    Normal, Fire
+}
+public struct DamageProp
+{
+    public DamageKind type;
+    public float damage;
+    public DamageProp(float _damage) { this.damage = _damage; type = DamageKind.Normal; }
+    public DamageProp(float _damage, DamageKind _type) { this.damage = _damage; this.type = _type; }
+    
+    // DamageProp형을 float형으로 암시적 형변환 가능 예) float damage = new DamageProp(_damage);
+    public static implicit operator float(DamageProp info) => info.damage;
+
+    // float형을 DamageProp로 암시적 형변환 가능 예) DamageProp info = 1.0f;
+    public static implicit operator DamageProp(float damage) => new DamageProp(damage);
+    
+    public static DamageProp operator +(DamageProp a, DamageProp b)
+        => new DamageProp(a.damage + b.damage, a.type);
+    public static DamageProp operator +(DamageProp a, float _damage)
+        => new DamageProp(a.damage + _damage, a.type);
+        
+    public static DamageProp operator -(DamageProp a, DamageProp b)
+        => new DamageProp(a.damage - b.damage, a.type);
+    public static DamageProp operator -(DamageProp a, float _damage)
+        => new DamageProp(a.damage - _damage, a.type);
+
+    public override string ToString() => $"{damage}";
+}
+
 
 // 유니티 Gameobject에 범용 데이터를 임시로 Get,Set 할수 있는 기능..
 public static class GeneralValue
@@ -83,9 +117,27 @@ public static class MyUtils
         }
         return (T)System.Enum.Parse(typeof(T), value, true);
     }
+    public static string[] ToEnumStrings<T>()
+    {
+        return System.Enum.GetNames(typeof(T));
+    }
     public static int CountEnum<T>()
     {
         return System.Enum.GetValues(typeof(T)).Length;
+    }
+    public static T RandomEnum<T>(bool exceptFirst = false)
+    {
+        int enumVal = UnityEngine.Random.Range(exceptFirst ? 1 : 0, CountEnum<T>());
+        return (T) (object) enumVal;
+    }
+    public static bool IsPercentHit(int percent)
+    {
+        return (UnityEngine.Random.Range(0, 1000) % 100) < percent;
+    }
+    public static IEnumerable EnumForeach<T>()
+    {
+        foreach (T item in System.Enum.GetValues(typeof(T)))
+            yield return item;
     }
     static public int Sizeof<T>()
     {
@@ -533,6 +585,9 @@ public static class MyUtils
     }
     public static void ExSortRandomly<T>(this List<T> list)
     {
+        if(list.Count <= 1)
+            return;
+
         System.Random ran = new System.Random();
         int n = list.Count;
         while (n > 1)
@@ -542,6 +597,27 @@ public static class MyUtils
             T val = list[idx];
             list[idx] = list[n];
             list[n] = val;
+        }
+    }
+    public static void ExSortInCloseOrder(this List<Transform> list, Vector3 refPositioin)
+    {
+        list.Sort((a, b) => {
+            return (a.position - refPositioin).sqrMagnitude > (b.position - refPositioin).sqrMagnitude ? 1 : -1;
+        });
+    }
+    public static Coroutine ExRepeatCoroutine(this MonoBehaviour mono, float interval, Action func, int repeatCount = 0)
+    {
+        return mono.StartCoroutine(CoExRepeatCall(func, interval, repeatCount));
+    }
+    public static IEnumerator CoExRepeatCall(Action EventEnd, float interval, int repeatCount)
+    {
+        bool isInfiniteMode = repeatCount <= 0;
+        int count = 0;
+        while(isInfiniteMode || count < repeatCount)
+        {
+            EventEnd?.Invoke();
+            yield return new WaitForSeconds(interval);
+            count++;
         }
     }
     public static void ExDelayedCoroutine(this MonoBehaviour mono, float delay, Action func)
@@ -745,13 +821,83 @@ public static class MyUtils
         string path = AssetDatabase.GUIDToAssetPath(guid);
         return AssetDatabase.LoadAssetAtPath(path, assetType);
     }
+    
+    // prefab으로부터 guid정보를 가져온다
+    public static string GetGUIDFromPrefab(UnityEngine.GameObject prefab)
+    {
+        UnityEngine.Object oriPrefab = GetOriginPrefab(prefab);
+        if(oriPrefab == null)
+            return "";
+            
+        string path = AssetDatabase.GetAssetPath(oriPrefab);
+        string guid = AssetDatabase.AssetPathToGUID(path);
+        return guid;
+    }
+    
+    // 실제 ProjectView에 존재하는 원본 prefab파일에 접근한다
+	public static UnityEngine.Object GetOriginPrefab(UnityEngine.Object selection)
+	{
+		if (selection == null)
+			return null;
+
+        // IsPersistent는 디스크에 파일 형태로 존재하는지 여부 파악(오리지널 프리팹을 확인하는 방법)
+        if(EditorUtility.IsPersistent(selection))
+            return selection;
+
+        PrefabAssetType type = PrefabUtility.GetPrefabAssetType(selection);
+		if (type == PrefabAssetType.Regular)
+		{
+            // 대응되는 원본 프리팹을 참조한다
+			UnityEngine.Object prefab = PrefabUtility.GetCorrespondingObjectFromSource(selection);
+			return prefab;
+		}
+
+        PrefabStage prefabStage = PrefabStageUtility.GetPrefabStage(selection as GameObject);
+        if(prefabStage != null)
+        {
+            return prefabStage.prefabContentsRoot;
+        }
+
+		return null;
+
+        // There are totally 3 distinct type/state of prefab. And they must be handled differently.
+        // Prefab Asset (The one that sits in Asset folder)
+        // Prefab Instance (The one that dragged into scene to become blue game object, or nested inside another prefab)
+        // Prefab Stage (Editing prefab intermediate in UnityEditor prefab edit mode)
+
+        // For example: from getting assetPath alone, these 3 cases will need different API
+        // Prefab Asset => use UnityEditor.AssetDatabase.GetAssetPath()
+        // Prefab Instance => PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot()
+        // Prefab Stage => PrefabStageUtility.GetCurrentPrefabStage then editorPrefabStage.prefabAssetPath
+        
+        // Finding root of game object for each case also need different API
+        // Prefab Asset => use gameObject.transform.root.gameObject()
+        // Prefab Instance => PrefabUtility.GetNearestPrefabInstanceRoot()
+        // Prefab Stage => PrefabStageUtility.GetCurrentPrefabStage then editorPrefabStage.prefabContentsRoot
+        // (See deprecate message in old PrefabUtility.FindPrefabRoot function, it is very useful.)
+
+        // Im not sure which case you are on.
+        // But for PrefabUitility API example, you could look into my demo on https://github.com/wappenull/UnityPrefabTester
+        // It is editor script demo.
+	}
     // guid값에서 실제 Asset 리소스 객체 가져옴
     public static string GetGUIDFromAsset(UnityEngine.Object asset)
     {
+        // asset이 prefabView 모드나 scene에 instantiate된 객체일 경우 assetPath를 반환하지 않는다.
+        // asset이 리소스일 경우만 동작
         string path = AssetDatabase.GetAssetPath(asset);
         string guid = AssetDatabase.AssetPathToGUID(path);
         return guid;
     }
+    public static long GUIDToLong(string guid)
+    {
+        long halfA = guid.Substring(0, guid.Length / 2).GetHashCode();
+        long halfB = guid.Substring(guid.Length / 2, guid.Length / 2).GetHashCode();
+        long newID = halfA | (halfB << 32);
+        newID &= ~((long)1 << 63);
+        return newID;
+    }
+    
 
     public static string[] GetStateNames(this Animator animator, int layerIndex)
     {
@@ -766,19 +912,6 @@ public static class MyUtils
         return names.ToArray();
     }
     
-    // prefab으로부터 guid정보를 가져온다
-    public static string GetGUIDFromPrefab(UnityEngine.GameObject prefab)
-    {
-        string path = AssetDatabase.GetAssetPath(prefab);
-        // prefab이 prefabView 모드나 scene에 instantiate된 객체일 경우 assetPath를 반환하지 않으므로 원래 prefab asset상태의 path정보를 가져와야 한다.
-        // if(path.Length <= 0)
-        // {
-        //     path = (UnityEditor.PrefabUtility.GetCorrespondingObjectFromOriginalSource(prefab)).assetPath;
-        // }
-        string guid = AssetDatabase.AssetPathToGUID(path);
-        return guid;
-    }
-
 #endif
 
 
@@ -853,48 +986,66 @@ public static class MyUtils
             yield return null;
         }
     }
-    public static IEnumerator CoRotateTowards2DLerp(float delay, Transform me, Transform target, float radianPerSec)
+
+    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed)
     {
-        Vector3 targetPos = target.position;
-        yield return new WaitForSeconds(delay);
+        Vector3 lastTargetPos = Vector3.zero;
         while (true)
         {
-            if(target != null)
-                targetPos = target.position;
-
-            Vector3 targetDirection = targetPos - me.transform.position;
-            float singleStep = radianPerSec * Time.deltaTime;
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
+            Vector3 targetDirection = curTargetPos - me.transform.position;
+            lastTargetPos = curTargetPos;
+            float singleStep = rotateSpeed * Time.deltaTime;
             Vector3 newDirection = Vector3.RotateTowards(me.transform.right, targetDirection, singleStep, 0.0f);
 
-            // Debug.DrawRay(me.transform.position, newDirection, Color.red);
+            Debug.DrawRay(me.transform.position, newDirection, Color.red);
 
             float degree = Vector3.SignedAngle(newDirection, Vector3.right, Vector3.back);
             me.transform.rotation = Quaternion.Euler(0, 0, degree);
             yield return null;
-            radianPerSec += 0.1f;// 시간이 지남에 따라 더빠르게 방향을 튼다(무한 회전 방지)
+            rotateSpeed += 0.1f;// 시간이 지남에 따라 더빠르게 방향을 튼다(무한 회전 방지)
         }
     }
-
     // return : 0 ~ 180 degree
     public static float GetDegree(Vector3 dirA, Vector3 dirB)
     {
         return Vector3.Angle(dirA, dirB);
     }
 
-    public static bool IsHitPercent(float rate)
+    public static Vector3 Reflect(Vector3 enterVector, Vector3 normal)
     {
-        return (UnityEngine.Random.Range(0, 1000) % 100) < (int)(rate * 100.0f);
+        return Vector3.Reflect(enterVector, normal);
     }
-    
-    public static long GUIDToLong(string guid)
+    public static bool IsOutOfRange<T>(this T[] list, int index)
     {
-        long halfA = guid.Substring(0, guid.Length / 2).GetHashCode();
-        long halfB = guid.Substring(guid.Length / 2, guid.Length / 2).GetHashCode();
-        long newID = halfA | (halfB << 32);
-        newID &= ~((long)1 << 63);
-        return newID;
+        return index < 0 || index >= list.Length;
+    }
+    public static bool IsOutOfRange<T>(this List<T> list, int index)
+    {
+        return index < 0 || index >= list.Count;
+    }
+    public static void SetMinimum(this ref int val, int minValue)
+    {
+        val = Mathf.Max(val, minValue);
+        }
+    public static void SetMaximum(this ref int val, int maxValue)
+    {
+        val = Mathf.Min(val, maxValue);
+    }
+
+    public static void FindChildAll(this Transform parent, string name, List<Transform> rets)
+    {
+        foreach(Transform child in parent)
+        {
+            if(child.name.Equals(name))
+                rets.Add(child);
+            
+            if(child.childCount > 0)
+                child.FindChildAll(name, rets);
+        }
     }
 }
+
 // MyUtils End =================================================
 
 
