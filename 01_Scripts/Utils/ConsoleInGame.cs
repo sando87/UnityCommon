@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// 릴리즈 빌드 후 실제 게임 플레이 환경에서 손쉽게 로그를 볼수 있게 해주는 기능
@@ -23,7 +24,7 @@ namespace Consolation
         /// <summary>
         /// The hotkey to show and hide the console window.
         /// </summary>
-        public KeyCode toggleKey = KeyCode.BackQuote;
+        public Key toggleKey = Key.Backquote;
 
         /// <summary>
         /// Whether to open as soon as the game starts.
@@ -152,19 +153,19 @@ namespace Consolation
 
             float curTime = Time.realtimeSinceStartup;
 
-            if (Input.GetKeyDown(toggleKey))
+            if (Keyboard.current[toggleKey].wasPressedThisFrame)
             {
                 isVisible = !isVisible;
             }
 
-            if (shakeToOpen &&
-                Input.acceleration.sqrMagnitude > shakeAcceleration &&
-                curTime - lastToggleTime >= toggleThresholdSeconds &&
-                (!shakeRequiresTouch || Input.touchCount > 2))
-            {
-                isVisible = !isVisible;
-                lastToggleTime = curTime;
-            }
+            // if (shakeToOpen &&
+            //     Input.acceleration.sqrMagnitude > shakeAcceleration &&
+            //     curTime - lastToggleTime >= toggleThresholdSeconds &&
+            //     (!shakeRequiresTouch || Input.touchCount > 2))
+            // {
+            //     isVisible = !isVisible;
+            //     lastToggleTime = curTime;
+            // }
         }
 
         #endregion

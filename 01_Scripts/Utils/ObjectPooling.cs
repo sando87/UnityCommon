@@ -40,13 +40,43 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
         obj.transform.SetParent(parent);
         return obj;
     }
+    
+    public GameObject Instantiate(string resourcesPath, Transform parent = null)
+    {
+        GameObject obj = Instantiate(resourcesPath);
+        if(obj == null)
+        {
+            return null;
+        }
+        
+        if(parent != null)
+            obj.transform.SetParent(parent);
+            
+        return obj;
+    }
 
+    public GameObject InstantiateVFX(string prefabNameInVFXPath, Vector3 position, Quaternion rotation, float dir, Transform parent = null)
+    {
+        if(prefabNameInVFXPath.Length <= 0)
+            return null;
+
+        GameObject vfx = Instantiate(Consts.VFXPath + prefabNameInVFXPath, position, rotation, parent);
+        vfx.transform.localScale = new Vector3(dir, 1, 1);
+        return vfx;
+    }
     public GameObject InstantiateVFX(string prefabNameInVFXPath, Vector3 position, Quaternion rotation, Transform parent = null)
     {
         if(prefabNameInVFXPath.Length <= 0)
             return null;
 
         return Instantiate(Consts.VFXPath + prefabNameInVFXPath, position, rotation, parent);
+    }
+    public GameObject InstantiateVFX(string prefabNameInVFXPath, Transform parent = null)
+    {
+        if(prefabNameInVFXPath.Length <= 0)
+            return null;
+
+        return Instantiate(Consts.VFXPath + prefabNameInVFXPath, parent);
     }
 
     // 요청한 객체가 할당 가능한지 여부 확인
@@ -100,6 +130,12 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
             Destroy(obj);
         }
 
+        // 대상객체가 이미 풀링 안에 있는 상태이면 그냥 반환
+        if(IsAlreadyInPoolingGroup(obj))
+        {
+            return;
+        }
+
         // 다 사용한 객체는 재활용을 위해 다시 Pool에 넣어준다
         string resourcesPath = groupID as string;
         Transform parentTr = mObjectPool[resourcesPath];
@@ -123,6 +159,23 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
     private bool IsInstantiated(GameObject obj)
     {
         return obj.scene.rootCount > 0;
+    }
+
+    public bool IsAlreadyInPoolingGroup(GameObject obj)
+    {
+        if(obj.activeSelf)
+            return false;
+
+        ObjectPooling poolRoot = obj.GetComponentInParent<ObjectPooling>();
+        if(poolRoot == null)
+            return false;
+
+        return true;
+    }
+
+    public static bool IsPoolingable(GameObject obj)
+    {
+        return obj.GetValue(PoolingGroup) != null;
     }
 }
 

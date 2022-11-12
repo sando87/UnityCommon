@@ -42,18 +42,6 @@ public abstract class ScriptableObjectDictionary<TypeID, TypeData> : ScriptableO
 // [CreateAssetMenu(fileName = "SampleTable", menuName = "Scriptable Object Asset/SampleTable")]
 // public class SampleTable : ScriptableObjectDictionary<int, SampleInfo>
 // {
-//      private static SampleTable mInst = null;
-//      public static SampleTable Inst
-//      {
-//          get
-//          {
-//              if (mInst == null)
-//              {
-//                  mInst = Resources.Load<SampleTable>("Database/SampleTable");
-//              }
-//              return mInst;
-//          }
-//      }
 //      protected override int GetID(SampleInfo data)
 //      {
 //          return data.sampleID;

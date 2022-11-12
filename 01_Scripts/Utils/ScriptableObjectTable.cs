@@ -9,7 +9,6 @@ public class ScriptableObjectTable<T> : ScriptableObject
 {
     //[Table]
     [SerializeField]
-    [ReorderableTable]
     protected List<T> DataList = new List<T>();
 
     public T GetDataOfIndex(int index) { return DataList[index]; }
@@ -26,18 +25,6 @@ public class ScriptableObjectTable<T> : ScriptableObject
 // [CreateAssetMenu(fileName = "SampleTable", menuName = "Scriptable Object Asset/SampleTable")]
 // public class SampleTable : ScriptableObjectTable<SampleInfo>
 // {
-//      private static SampleTable mInst = null;
-//      public static SampleTable Inst
-//      {
-//          get
-//          {
-//              if (mInst == null)
-//              {
-//                  mInst = Resources.Load<SampleTable>("Database/SampleTable");
-//              }
-//              return mInst;
-//          }
-//      }
 // }
 
 // [System.Serializable]

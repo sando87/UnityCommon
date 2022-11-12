@@ -20,7 +20,7 @@ using UnityEngine;
 ///     public string name;
 ///     public int age;
 /// }
-/// Person[] persons = CSVReader.Deserialize(',', csvStringText);
+/// Person[] persons = CSVParser<Person>.Deserialize(',', csvStringText);
 /// </summary>
  
 
