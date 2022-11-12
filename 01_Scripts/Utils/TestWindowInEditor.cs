@@ -103,11 +103,6 @@ public class TestWindowInEditor : EditorWindow
         GUILayout.Space(buttonGap);
 
 
-        if(GUILayout.Button("InGame Paused menu"))
-        {
-            IngamePopupManager.ShowPopupByName("IngamePausedPopup");
-        }
-
         GUILayout.EndVertical();
     }
 }

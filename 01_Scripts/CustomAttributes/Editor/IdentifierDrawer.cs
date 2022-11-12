@@ -2,11 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.UIElements;
 using UnityEditor;
-using UnityEditor.Animations;
 
 [CustomPropertyDrawer(typeof(IdentifierAttribute))]
 public class IdentifierDrawer : PropertyDrawer
@@ -21,7 +18,9 @@ public class IdentifierDrawer : PropertyDrawer
             long id = property.longValue;
             if(id != 0 && !mIDObjectTable.ContainsKey(id))
             {
-                mIDObjectTable[id] = GetGUID(property);
+                string guid = GetGUID(property);
+                if(guid.Length > 0)
+                    mIDObjectTable[id] = guid;
             }
         }
         
@@ -92,6 +91,9 @@ public class IdentifierDrawer : PropertyDrawer
     public long AssignNewID(SerializedProperty property, long preID)
     {
         string guid = GetGUID(property);
+        if(guid.Length <= 0)
+            return 0;
+            
         if(mIDObjectTable.ContainsKey(preID))
         {
             if(!mIDObjectTable[preID].Equals(guid))

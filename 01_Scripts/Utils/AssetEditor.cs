@@ -11,23 +11,7 @@ public class AssetEditor : MonoBehaviour
 {
     public GameObject RefPrefab = null;
 
-    [MenuItem("MyMenu/CreateSuitDB")]
-    static void CreateSuitDB()
-    {
-        List<SuitRawInfo> infos = new List<SuitRawInfo>();
-        infos.Add(new SuitRawInfo());
-        infos.Add(new SuitRawInfo());
-        infos.Add(new SuitRawInfo());
-        infos.Add(new SuitRawInfo());
-        infos.Add(new SuitRawInfo());
-        infos.Add(new SuitRawInfo());
-        string csvstring = CSVParser<SuitRawInfo>.Serialize(',', infos);
-        File.WriteAllText("./Assets/00_MetaSuit/Resources/Database/SuitRawInfo.csv", csvstring);
-
-        // SuitRawInfo info = DatabaseCSV<SuitRawInfo>.Instance.GetInfo(2);
-        // LOG.trace(info.name);
-    }
-
+    // 특정 프리팹과 동일한 프리팹을 생성후 sprite만 교체해주는 작업을 일괄적으로 한번에 처리
     [MenuItem("CONTEXT/AssetEditor/AddNewExteriors")]
     static void AddNewExteriors(MenuCommand command)
     {
@@ -54,10 +38,8 @@ public class AssetEditor : MonoBehaviour
             newPrefab.GetComponentInChildren<BoxCollider>().size = sr.bounds.size;
             newPrefab.GetComponentInChildren<BoxCollider>().center = sr.bounds.center;
 
-            string newPrefabGUID = AssetDatabase.AssetPathToGUID(localPath);
-            newPrefab.GetComponentInChildren<MapEditorObject>().resourceID = MyUtils.GUIDToLong(newPrefabGUID);
-
-            LOG.trace(newPrefab.name);
+            // string newPrefabGUID = AssetDatabase.AssetPathToGUID(localPath);
+            // newPrefab.GetComponentInChildren<MapEditorObject>().resourceID = MyUtils.GUIDToLong(newPrefabGUID);
         }
         
         AssetDatabase.SaveAssets();
@@ -66,7 +48,7 @@ public class AssetEditor : MonoBehaviour
 
 
 
-
+    //특정 선택된 프리팹들을 일괄적으로 수정해줌
     [MenuItem("MyMenu/Edit Renderers")]
     static void EditRenderers()
     {
@@ -99,9 +81,7 @@ public class AssetEditor : MonoBehaviour
     {
         SpriteRenderer sr = target.GetComponentInChildren<SpriteRenderer>();
         DestroyImmediate(sr.GetComponent<AllIn1SpriteShader.AllIn1Shader>(), true);
-        DestroyImmediate(sr.GetComponent<RendererAllInOne>(), true);
         sr.material = mat;
-        sr.gameObject.AddComponent<RendererSpriteFlash>();
     }
 
 

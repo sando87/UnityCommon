@@ -21,7 +21,8 @@ public class SFXSelectorDrawer : PropertyDrawer
             if (list == null)
             {
                 List<string> names = new List<string>();
-                names.Add("<None>");
+                names.Add("<Empty>");
+                names.Add("<Miss>");
                 string path = Consts.SFXPath; //((SFXSelectorAttribute)attribute).path;
                 AudioClip[] clips = Resources.LoadAll<AudioClip>(path);
                 foreach (AudioClip clip in clips)
@@ -34,12 +35,21 @@ public class SFXSelectorDrawer : PropertyDrawer
             if(list != null && list.Length > 0)
             {
                 idx = GetIndex(property.stringValue);
+                if(idx == 0)
+                {
+                    if(property.stringValue.Length > 0)
+                    {
+                        list[1] = "<Miss>" + property.stringValue;
+                        idx = 1;
+                    }
+                }
 
                 EditorGUI.BeginChangeCheck();
                 idx = EditorGUI.Popup(position, label.text, idx, list);
 
                 if (EditorGUI.EndChangeCheck())  //Inspector창에서 콤보박스 선택시 진입
                 {
+                    list[1] = "<Miss>";
                     property.stringValue = idx == 0 ? "" : list[idx];
                 }
             }

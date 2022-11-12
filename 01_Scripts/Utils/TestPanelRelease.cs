@@ -34,6 +34,7 @@ public class TestPanelRelease : MonoBehaviour
         StartCoroutine(OnOffPanel());
     }
 
+    // 3초간 누르고 있으면 Test패널 킨다.
     IEnumerator OnOffPanel()
     {
         float pressingTime = 0;
@@ -52,14 +53,6 @@ public class TestPanelRelease : MonoBehaviour
             yield return null;
         }
     }
-
-    // void Update()
-    // {
-    //     if(Keyboard.current.equalsKey.wasPressedThisFrame)
-    //     {
-    //         mIsShow = !mIsShow;
-    //     }
-    // }
 
     void OnGUI()
     {
@@ -80,29 +73,10 @@ public class TestPanelRelease : MonoBehaviour
 
         if (GUILayout.Button("게임 데이터 초기화", mGuiStyle))
         {
-            GameFileManager<UserPlayInfo>.ResetUserDataFile();
-            GameFileManager<UserSettingInfo>.ResetUserDataFile();
-        }
-
-        foreach(Suit suit in MyUtils.EnumForeach<Suit>())
-        {
-            if(GUILayout.Button("Suit " + suit, mGuiStyle))
-            {
-                SuitItemCover[] allSuitItem = FindObjectsOfType<SuitItemCover>();
-                foreach(SuitItemCover item in allSuitItem)
-                {
-                    item.SetPrivateFieldValue("_SuitType", suit);
-                }
-            }
         }
 
         if (GUILayout.Button("InGame 성공처리", mGuiStyle))
         {
-            InGameStarter starter = InGameStarter.FindInstance();
-            if(starter != null)
-            {
-                starter.ClearStage();
-            }
         }
 
         GUILayout.EndVertical();
