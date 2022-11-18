@@ -15,12 +15,27 @@ public class IdentifierDrawer : PropertyDrawer
     {
         if(!Application.isPlaying && property.propertyType == SerializedPropertyType.Integer)
         {
-            long id = property.longValue;
-            if(id != 0 && !mIDObjectTable.ContainsKey(id))
+            // 필드가 배열 속성일 경우와 아닌경우로 나뉘어 처리된다.
+            if(property.name.Equals(property.propertyPath))
             {
-                string guid = GetGUID(property);
-                if(guid.Length > 0)
-                    mIDObjectTable[id] = guid;
+                long id = property.longValue;
+                if(id != 0 && !mIDObjectTable.ContainsKey(id))
+                {
+                    string guid = GetGUID(property);
+                    if(guid.Length > 0)
+                        mIDObjectTable[id] = guid;
+                }
+            }
+            else
+            {
+                string[] pieces = property.propertyPath.Split(new char[] { '[', ']' });
+                int arrayIndex = int.Parse(pieces[1]);
+
+                long id = property.longValue;
+                if(id != 0 && !mIDTable.ContainsKey(id))
+                {
+                    mIDTable[id] = arrayIndex;
+                }
             }
         }
         

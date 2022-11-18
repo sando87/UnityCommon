@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class ScriptableObjectTable<T> : ScriptableObject
 {
-    //[Table]
+    [Table]
     [SerializeField]
     protected List<T> DataList = new List<T>();
 
