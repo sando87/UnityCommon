@@ -140,6 +140,19 @@ public class AssetEditor : MonoBehaviour
         Debug.Log("Doubled Rigidbody's Mass to " + body.mass + " from Context Menu.");
     }
 
+    [MenuItem("Assets/MyCategory/LogSelections")]
+    static void LogSelections()
+    {
+        foreach (Object asset in Selection.GetFiltered<Object>(SelectionMode.Assets))
+        {
+            string path = AssetDatabase.GetAssetPath(asset);
+            LOG.trace(path);
+        }
+        
+        foreach(GameObject prefab in Selection.gameObjects)
+            LOG.trace(prefab.name);
+    }
+
     // Add a menu item to create custom GameObjects.
     // Priority 10 ensures it is grouped with the other menu items of the same kind
     // and propagated to the hierarchy dropdown and hierarchy context menus.
