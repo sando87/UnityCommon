@@ -987,12 +987,12 @@ public static class MyUtils
         }
     }
 
-    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed)
+    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed, Vector3 offfset)
     {
         Vector3 lastTargetPos = Vector3.zero;
         while (true)
         {
-            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : (target.position + offfset);
             Vector3 targetDirection = curTargetPos - me.transform.position;
             lastTargetPos = curTargetPos;
             float singleStep = rotateSpeed * Time.deltaTime;
