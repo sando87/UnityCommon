@@ -26,20 +26,27 @@ public class TestPanelRelease : MonoBehaviour
 
     private bool mIsShow = true;
     private GUIStyle mGuiStyle = null;
+    private InGameSystem InGameSystem { get { return InGameSystem.Instance; } }
+    private RUIFormInGame InGameUI { get { return FindObjectOfType<RUIFormInGame>(); } }
 
     void Awake()
     {
         DontDestroyOnLoad(this.gameObject);
     }
 
-
     void Update()
     {
-        // '='누르면 테스트 패널 사라짐
-        // if(Input.GetKeyDown(KeyCode.Equals))
-        // {
-        //     mIsShow = !mIsShow;
-        // }
+        if (Keyboard.current.iKey.wasPressedThisFrame)
+            InGameUI.InvokePrivateMethod("OnClickRaiseMineral", null);
+        if (Keyboard.current.oKey.wasPressedThisFrame)
+            InGameUI.InvokePrivateMethod("OnClickCreateUnit", null);
+        if (Keyboard.current.pKey.wasPressedThisFrame)
+            InGameUI.InvokePrivateMethod("OnClickToggleUpgradePanel", null);
+
+        if (Keyboard.current.leftBracketKey.wasPressedThisFrame)
+            {Time.timeScale += 0.2f; LOG.trace(Time.timeScale);}
+        if (Keyboard.current.rightBracketKey.wasPressedThisFrame)
+            {Time.timeScale -= 0.2f; LOG.trace(Time.timeScale);}
     }
 
     [Button]
@@ -63,6 +70,33 @@ public class TestPanelRelease : MonoBehaviour
     void EarnMineral()
     {
         InGameSystem.Instance.Mineral += 100;
+    }
+    [Button("RaiseMineral ( i )")]
+    void RaiseMineral()
+    {
+        InGameUI.InvokePrivateMethod("OnClickRaiseMineral", null);
+    }
+    [Button("CreateUnit ( o )")]
+    void CreateUnit()
+    {
+        InGameUI.InvokePrivateMethod("OnClickCreateUnit", null);
+    }
+    [Button("ToggleUpgradePanel ( p )")]
+    void ToggleUpgradePanel()
+    {
+        InGameUI.InvokePrivateMethod("OnClickToggleUpgradePanel", null);
+    }
+    [Button("SpeedUp ( [ )")]
+    void SpeedUp()
+    {
+        Time.timeScale += 0.2f;
+        LOG.trace(Time.timeScale);
+    }
+    [Button("SpeedDown ( ] )")]
+    void SpeedDown()
+    {
+        Time.timeScale -= 0.2f;
+        LOG.trace(Time.timeScale);
     }
 
     // private const float PressDuration = 2;
