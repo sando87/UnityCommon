@@ -42,6 +42,19 @@ public class TestPanelRelease : MonoBehaviour
             InGameUI.InvokePrivateMethod("OnClickCreateUnit", null);
         if (Keyboard.current.pKey.wasPressedThisFrame)
             InGameUI.InvokePrivateMethod("OnClickToggleUpgradePanel", null);
+        if (Keyboard.current.uKey.wasPressedThisFrame)
+            InGameUI.InvokePrivateMethod("OnClickRaiseRarePercent", null);
+
+        if (Keyboard.current.qKey.wasPressedThisFrame)
+            InGameSystem.UpgradeWeapon(UpgradeType.Melee);
+        if (Keyboard.current.wKey.wasPressedThisFrame)
+            InGameSystem.UpgradeWeapon(UpgradeType.Gun);
+        if (Keyboard.current.eKey.wasPressedThisFrame)
+            InGameSystem.UpgradeWeapon(UpgradeType.Magic);
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+            InGameSystem.UpgradeWeapon(UpgradeType.TypeD);
+        if (Keyboard.current.tKey.wasPressedThisFrame)
+            InGameSystem.UpgradeWeapon(UpgradeType.Missile);
 
         if (Keyboard.current.leftBracketKey.wasPressedThisFrame)
             {Time.timeScale += 0.2f; LOG.trace(Time.timeScale);}
@@ -97,6 +110,16 @@ public class TestPanelRelease : MonoBehaviour
     {
         Time.timeScale -= 0.2f;
         LOG.trace(Time.timeScale);
+    }
+    [Button("RaiseRarePercent ( u )")]
+    void RaiseRarePercent()
+    {
+        InGameUI.InvokePrivateMethod("OnClickRaiseRarePercent", null);
+    }
+    [Button("WeaponUpgrade ( qwert )")]
+    void WeaponUpgrade()
+    {
+        
     }
 
     // private const float PressDuration = 2;
