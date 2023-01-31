@@ -987,18 +987,35 @@ public static class MyUtils
         }
     }
 
-    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed, Vector3 offfset)
+    public static IEnumerator CoRotateTowards2DLerp(Transform me, Transform target, float rotateSpeed)
     {
         Vector3 lastTargetPos = Vector3.zero;
         while (true)
         {
-            Vector3 curTargetPos = (target == null) ? lastTargetPos : (target.position + offfset);
+            Vector3 curTargetPos = (target == null) ? lastTargetPos : target.position;
             Vector3 targetDirection = curTargetPos - me.transform.position;
             lastTargetPos = curTargetPos;
             float singleStep = rotateSpeed * Time.deltaTime;
             Vector3 newDirection = Vector3.RotateTowards(me.transform.right, targetDirection, singleStep, 0.0f);
 
-            Debug.DrawRay(me.transform.position, newDirection, Color.red);
+            // Debug.DrawRay(me.transform.position, newDirection, Color.red);
+
+            float degree = Vector3.SignedAngle(newDirection, Vector3.right, Vector3.back);
+            me.transform.rotation = Quaternion.Euler(0, 0, degree);
+            yield return null;
+            rotateSpeed += 0.1f;// 시간이 지남에 따라 더빠르게 방향을 튼다(무한 회전 방지)
+        }
+    }
+    public static IEnumerator CoRotateTowards2DLerp(Transform me, Vector3 destination, float rotateSpeed)
+    {
+        while (true)
+        {
+            Vector3 curTargetPos = destination;
+            Vector3 targetDirection = curTargetPos - me.transform.position;
+            float singleStep = rotateSpeed * Time.deltaTime;
+            Vector3 newDirection = Vector3.RotateTowards(me.transform.right, targetDirection, singleStep, 0.0f);
+
+            // Debug.DrawRay(me.transform.position, newDirection, Color.red);
 
             float degree = Vector3.SignedAngle(newDirection, Vector3.right, Vector3.back);
             me.transform.rotation = Quaternion.Euler(0, 0, degree);
