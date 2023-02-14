@@ -20,7 +20,7 @@ public class GamePlayData
     {
 #if UNITY_EDITOR
         return Application.persistentDataPath + "/" + FILENAME;
-#elif UNITY_ANDROID || UNITY_IPHONE
+#else
         return Application.persistentDataPath + "/" + FILENAME_ENC;
 #endif
     }
@@ -30,7 +30,7 @@ public class GamePlayData
         string jsonText = JsonUtility.ToJson(mUserSaveData, true);
 #if UNITY_EDITOR
         MyUtils.SaveToFile(jsonText, path, false);
-#elif UNITY_ANDROID || UNITY_IPHONE
+#else
         MyUtils.SaveToFile(jsonText, path, true);
 #endif
     }
@@ -45,7 +45,7 @@ public class GamePlayData
         }
 #if UNITY_EDITOR
         bool ret = MyUtils.LoadFromFile(path, false, out string data);
-#elif UNITY_ANDROID || UNITY_IPHONE
+#else
         bool ret = MyUtils.LoadFromFile(path, true, out string data);
 #endif
         if (ret)
@@ -73,13 +73,15 @@ public class GamePlayData
         }
     }
 
-#if UNITY_EDITOR
+
     // 유저 데이터 파일 리셋
     public static void ResetUserDataFile()
     {
+#if UNITY_EDITOR
         mUserSaveData = new UserSaveData();
         Save();
-    }
 #endif
+    }
+
 
 }

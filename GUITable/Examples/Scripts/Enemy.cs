@@ -21,6 +21,8 @@ public class Enemy : MonoBehaviour
 
 	public void Instantiate ()
 	{
+#if UNITY_EDITOR
 		UnityEditor.PrefabUtility.InstantiatePrefab(this);
+#endif
 	}
 }
