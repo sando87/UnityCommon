@@ -100,13 +100,13 @@ public class TestPanelRelease : MonoBehaviour
         InGameUI.InvokePrivateMethod("OnClickToggleUpgradePanel", null);
     }
     [Button("SpeedUp ( [ )")]
-    void SpeedUp()
+    public void SpeedUp()
     {
         Time.timeScale += 0.2f;
         LOG.trace(Time.timeScale);
     }
     [Button("SpeedDown ( ] )")]
-    void SpeedDown()
+    public void SpeedDown()
     {
         Time.timeScale -= 0.2f;
         LOG.trace(Time.timeScale);
