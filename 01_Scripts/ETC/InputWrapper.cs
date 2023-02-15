@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using static UnityEngine.InputSystem.InputAction;
 
@@ -131,6 +132,15 @@ public class InputWrapper : SingletonMono<InputWrapper>
 
         LOG.warn("No Matching DeviceName : " + deviceName);
         return InputDeviceType.None;
+    }
+
+    public bool IsPointerOverUIObject()
+    {
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = MousePosition();
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+        return results.Count > 0;
     }
 }
 
