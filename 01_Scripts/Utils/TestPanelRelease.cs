@@ -63,7 +63,7 @@ public class TestPanelRelease : MonoBehaviour
     }
 
     [Button]
-    void CreateNewUnit()
+    public void CreateNewUnit()
     {
         BaseObject newUnit = InGameSystem.Instance.CreateUnit(UnitID);
         newUnit.SpecProp.Level = _Level;
@@ -120,6 +120,64 @@ public class TestPanelRelease : MonoBehaviour
     void WeaponUpgrade()
     {
         
+    }
+    [Button("NextStep")]
+    public void NextStep()
+    {
+        if (_Level == 1)
+        {
+            _Level = 2;
+            _WaveNumber = 5;
+            InGameSystem.Instance.NextWaveNumberForTest = _WaveNumber;
+            InGameSystem.Instance.MineralStep = 4;
+            InGameSystem.Instance.Mineral = 0;
+            InGameSystem.Instance.KillPoint = 0;
+            InGameSystem.Instance.CurrentRarePercentIndex = 0;
+            UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
+            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 20;
+        }
+        else if (_Level == 2)
+        {
+            _Level = 3;
+            _WaveNumber = 11;
+            InGameSystem.Instance.NextWaveNumberForTest = _WaveNumber;
+            InGameSystem.Instance.MineralStep = 7;
+            InGameSystem.Instance.Mineral = 0;
+            InGameSystem.Instance.KillPoint = 0;
+            InGameSystem.Instance.CurrentRarePercentIndex = 1;
+            UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
+            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 70;
+        }
+        else if (_Level == 3)
+        {
+            _Level = 4;
+            _WaveNumber = 20;
+            InGameSystem.Instance.NextWaveNumberForTest = _WaveNumber;
+            InGameSystem.Instance.MineralStep = 12;
+            InGameSystem.Instance.Mineral = 0;
+            InGameSystem.Instance.KillPoint = 0;
+            InGameSystem.Instance.CurrentRarePercentIndex = 2;
+            UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
+            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 120;
+        }
+        else if (_Level == 4)
+        {
+            _Level = 5;
+            _WaveNumber = 30;
+            InGameSystem.Instance.NextWaveNumberForTest = _WaveNumber;
+            InGameSystem.Instance.MineralStep = 20;
+            InGameSystem.Instance.Mineral = 0;
+            InGameSystem.Instance.KillPoint = 0;
+            InGameSystem.Instance.CurrentRarePercentIndex = 3;
+            UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
+            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 170;
+        }
+    }
+    [Button("NewUnit")]
+    public void NewUnit()
+    {
+        UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
+        InGameSystem.Instance.CreateRandomNewUnit(highestUpgradeType, _Level);
     }
 
     // private const float PressDuration = 2;

@@ -37,22 +37,21 @@ public class GameFileManager<Filetype> where Filetype : SaveableBase, new()
     private static string GetFileName()
     {
         string filename = typeof(Filetype).Name;
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         return filename + ".json";
-//#elif UNITY_ANDROID || UNITY_IPHONE
-#else
-        return filename.GetHashCode().ToString("X4") + ".dat";
-#endif
+//#else
+//        return filename.GetHashCode().ToString("X4") + ".dat";
+//#endif
     }
     public static void Save(Filetype mData)
     {
         string fullname = GetPath() + "/" + GetFileName();
         string jsonText = JsonUtility.ToJson(mData, true);
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         MyUtils.SaveToFile(jsonText, fullname, false);
-#else
-        MyUtils.SaveToFile(jsonText, fullname, true);
-#endif
+//#else
+//        MyUtils.SaveToFile(jsonText, fullname, true);
+//#endif
     }
     public static Filetype Load()
     {
@@ -66,11 +65,11 @@ public class GameFileManager<Filetype> where Filetype : SaveableBase, new()
         }
         
         // 파일 암호화 처리(출시버전일 경우 암호화 처리함)
-#if UNITY_EDITOR
+//#if UNITY_EDITOR
         bool ret = MyUtils.LoadFromFile(fullname, false, out string data);
-#else
-        bool ret = MyUtils.LoadFromFile(fullname, true, out string data);
-#endif
+//#else
+//        bool ret = MyUtils.LoadFromFile(fullname, true, out string data);
+//#endif
 
         // 파일 호환성 검사(이전 버전과 다르면 버전별로 처리해야하는 작업 수행)
         if (ret)
