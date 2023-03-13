@@ -170,7 +170,7 @@ public class TestPanelRelease : MonoBehaviour
             InGameSystem.Instance.KillPoint = 0;
             InGameSystem.Instance.CurrentRarePercentIndex = 3;
             UpgradeType highestUpgradeType = InGameSystem.Instance.GetHighestUpgradePower();
-            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 170;
+            InGameSystem.Instance.UpgradePower[highestUpgradeType] = 200;
         }
     }
     [Button("NewUnit")]
