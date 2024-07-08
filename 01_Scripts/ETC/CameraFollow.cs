@@ -76,31 +76,31 @@ public class CameraFollow : MonoBehaviour
         mCamera.transform.localPosition = mLocalOriginPosCamera;
         mCamera.transform.DOShakePosition(duration, strength, 90, 0, false, true);
     }
-    public void StartFocusZoomming(BaseObject target, float rate, float durtaion)
-    {
-        StartCoroutine(CoZoommingFocus(target, rate, durtaion));
-    }
-    IEnumerator CoZoommingFocus(BaseObject target, float rate, float duration)
-    {
-        mIsOutOfControl++;
-        float halfDuration = duration * 0.5f;
-        float orthoSize = mCamera.orthographicSize;
-        //mCamera.GetComponent<PixelPerfectCamera>().enabled = false;
+    // public void StartFocusZoomming(BaseObject target, float rate, float durtaion)
+    // {
+    //     StartCoroutine(CoZoommingFocus(target, rate, durtaion));
+    // }
+    // IEnumerator CoZoommingFocus(BaseObject target, float rate, float duration)
+    // {
+    //     mIsOutOfControl++;
+    //     float halfDuration = duration * 0.5f;
+    //     float orthoSize = mCamera.orthographicSize;
+    //     //mCamera.GetComponent<PixelPerfectCamera>().enabled = false;
 
-        mCamera.DOOrthoSize(orthoSize * rate, halfDuration).SetEase(Ease.OutQuart);
-        transform.DOMove(target.transform.position + Offset, halfDuration).SetEase(Ease.OutQuart);
-        yield return new WaitForSeconds(halfDuration);
+    //     mCamera.DOOrthoSize(orthoSize * rate, halfDuration).SetEase(Ease.OutQuart);
+    //     transform.DOMove(target.transform.position + Offset, halfDuration).SetEase(Ease.OutQuart);
+    //     yield return new WaitForSeconds(halfDuration);
         
-        mCamera.DOOrthoSize(orthoSize, halfDuration).SetEase(Ease.InOutQuad);
-        transform.DOMove(mTarget.transform.position + Offset, halfDuration).SetEase(Ease.InOutQuad);
-        yield return new WaitForSeconds(halfDuration);
+    //     mCamera.DOOrthoSize(orthoSize, halfDuration).SetEase(Ease.InOutQuad);
+    //     transform.DOMove(mTarget.transform.position + Offset, halfDuration).SetEase(Ease.InOutQuad);
+    //     yield return new WaitForSeconds(halfDuration);
 
-        mCamera.DOKill();
-        transform.DOKill();
-        mCamera.orthographicSize = orthoSize;
-        transform.position = mTarget.transform.position + Offset;
-        //mCamera.GetComponent<PixelPerfectCamera>().enabled = true;
-        mIsOutOfControl--;
-    }
+    //     mCamera.DOKill();
+    //     transform.DOKill();
+    //     mCamera.orthographicSize = orthoSize;
+    //     transform.position = mTarget.transform.position + Offset;
+    //     //mCamera.GetComponent<PixelPerfectCamera>().enabled = true;
+    //     mIsOutOfControl--;
+    // }
 
 }

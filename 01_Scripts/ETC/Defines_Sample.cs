@@ -103,3 +103,110 @@
 //     KeepPressing = 1 << 3, // 키를 지속적으로 누르고 있을경우 계속 감지
 //     All = ~0,
 // }
+
+using UnityEngine;
+
+public class Consts
+{
+    public const int PixelPerUnit = 32;
+    public const float DistPerPixel = 1.0f / PixelPerUnit;
+    public const float DistPerPixelHalf = DistPerPixel * 0.5f;
+    public const float DistPerPixelx2 = DistPerPixel * 2;
+    public const float BlockSize = 1.0f;
+    public const string MapFilePath = "./Assets/00_MetaSuit/Resources/";
+    public const string UserLogFilePath = "./Assets/00_MetaSuit/Resources/UserLog/";
+    public const string MapThemePath = "MapThemes/";
+    public const string VFXPath = "VFX/";
+    public const string SFXPath = "Sound/SFX/InGame/";
+}
+
+
+public enum AnimActionID
+{
+    Idle,
+    Move,
+    Damaged,
+    Death,
+    Rolling,
+    Jump,
+    HangingJump,
+    HangingHold,
+
+    AttackNormal,
+    AttackSpecial,
+    AttackMelee,
+
+    Detected,
+    Stun,
+    SuitOn,
+    SuitOff,
+    SuitOver,
+    Panic,
+    IdlePatrol,
+    General,
+    Turn,
+    SwitchOn,
+    Prefix,
+    Suffix,
+    Appear,
+    Respawn,
+    Reload,
+
+    AttackNormal2,
+    AttackNormal3,
+    AttackChargeLoop,
+
+    ReadySpecial,
+    Hide, // BossBaron 에서 Appear, Hide를 Digout, Digin 으로 사용
+    Transform, // BossCrab의 crab-robo 폼체인지에 사용
+}
+
+public class LayerID
+{
+    public static readonly int Player = LayerMask.NameToLayer("Player");
+    public static readonly int Enemies = LayerMask.NameToLayer("Enemies");
+    public static readonly int TerrainHard = LayerMask.NameToLayer("TerrainHard");
+    public static readonly int TerrainWeak = LayerMask.NameToLayer("TerrainWeak");
+    public static readonly int Props = LayerMask.NameToLayer("Props");
+
+    public static readonly int Platforms = LayerMask.NameToLayer("Platforms");
+    public static readonly int PlatformsThin = LayerMask.NameToLayer("PlatformsThin");
+
+    public static readonly int Rope = LayerMask.NameToLayer("Rope");
+    public static readonly int Water = LayerMask.NameToLayer("Water");
+    // public static readonly int DarkFog = LayerMask.NameToLayer("DarkFog");
+
+    public static readonly int Default = LayerMask.NameToLayer("Default");
+    public static readonly int InGameSystem = LayerMask.NameToLayer("InGameSystem");
+    public static readonly int UnSelectable = LayerMask.NameToLayer("UnSelectable");
+
+
+    // public static readonly int Projectiles = LayerMask.NameToLayer("Projectiles");
+    // public static readonly int Dangerous = LayerMask.NameToLayer("Dangerous");
+    // public static readonly int IngameParticles = LayerMask.NameToLayer("IngameParticles");
+    // public static readonly int ThemeBackground = LayerMask.NameToLayer("ThemeBackground");
+    // public static readonly int PlatformsBack = LayerMask.NameToLayer("PlatformsBack");
+    // public static readonly int Hitable = LayerMask.NameToLayer("Hitable");
+    // public static readonly int HitablePlayerOnly = LayerMask.NameToLayer("HitablePlayerOnly");
+    // public static readonly int HitablePlayerProps = LayerMask.NameToLayer("HitablePlayerProps");
+}
+
+public class AnimParam
+{
+    public static readonly int ActionType = Animator.StringToHash("ActionType");
+    public static readonly int ActionSubType = Animator.StringToHash("ActionSubType");
+    public static readonly int HandType = Animator.StringToHash("HandType");
+    public static readonly int DoActionTrigger = Animator.StringToHash("DoActionTrigger");
+    public static readonly int DoHandTrigger = Animator.StringToHash("DoHandTrigger");
+    public static readonly int VelocityY = Animator.StringToHash("VelocityY");
+    public static readonly int IsHangingRight = Animator.StringToHash("IsHangingRight");
+    public static readonly int IsSitDown = Animator.StringToHash("IsSitDown");
+    public static readonly int IsRun = Animator.StringToHash("IsRun");
+    public static readonly int DerivedType = Animator.StringToHash("DerivedType");
+    public static readonly int NomalAttackSpeed = Animator.StringToHash("NomalAttackSpeed");
+    public static readonly int MotionSpeed = Animator.StringToHash("MotionSpeed");
+    public static readonly int IsPhaseSecond = Animator.StringToHash("IsPhaseSecond");
+    public static readonly int IsLeftSide = Animator.StringToHash("IsLeftSide");
+    public static readonly int IsLoop = Animator.StringToHash("IsLoop");
+    public static readonly int IsLanding = Animator.StringToHash("IsLanding");
+}

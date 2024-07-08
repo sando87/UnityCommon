@@ -11,11 +11,11 @@ public class AnimatorHelper : MonoBehaviour
         mAnim = GetComponent<Animator>();
     }
 
-    public void SetTrigger(AnimActionID actionID)
-    {
-        mAnim.SetInteger(AnimParam.ActionType, (int)actionID);
-        mAnim.SetTrigger(AnimParam.DoActionTrigger);
-    }
+    // public void SetTrigger(AnimActionID actionID)
+    // {
+    //     mAnim.SetInteger(AnimParam.ActionType, (int)actionID);
+    //     mAnim.SetTrigger(AnimParam.DoActionTrigger);
+    // }
 
     public float GetCurrentNormalizedTime(int aniLayerIndex)
     {
