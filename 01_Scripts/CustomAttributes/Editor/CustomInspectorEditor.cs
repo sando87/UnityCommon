@@ -1,23 +1,12 @@
-#if UNITY_EDITOR
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public class ExampleClass : MonoBehaviour
+[CustomEditor(typeof(CustomInspectorExample))]
+public class CustomInspectorEditor : Editor
 {
-    public SystemLanguage language;
-    public string langName = "";
-
-    void Start() { }
-    void Update() { }
-}
-
-[CustomEditor(typeof(ExampleClass))]
-public class ExampleClassEditor : Editor
-{
-    public ExampleClass selected;
+    public CustomInspectorExample selected;
     SerializedProperty property;
     
     private void OnEnable()
@@ -28,7 +17,7 @@ public class ExampleClassEditor : Editor
         }
         else
         {
-            selected = (ExampleClass)target;
+            selected = (CustomInspectorExample)target;
         }
     }
 
@@ -49,5 +38,3 @@ public class ExampleClassEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 }
-
-#endif

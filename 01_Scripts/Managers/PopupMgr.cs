@@ -8,7 +8,7 @@ using UnityEngine;
 /// 사용예) UIPopupManager.Inst.Show<SomePopup>();
 /// </summary>
 
-public class UIPopupManager : SingletonMono<UIPopupManager>
+public class PopupMgr : SingletonMono<PopupMgr>
 {
     [SerializeField] PopupBase[] PopupPrefabs = null;
     [SerializeField] Transform CurrentRootUI = null;
