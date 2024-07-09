@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // 클래스 개념
-// 범용적으로 csv 포멧 파일 데이터 접근시 사용
+// 범용적으로 json포멧의 테이블 형태의 파일 데이터 접근시 사용
 //
 // 사용법 예시
-// 먼저 아래와 같이 csv 데이터 포멧에 맞는 구조체를 정의한 후
+// 먼저 아래와 같이 json테이블 데이터 포멧에 맞는 구조체를 정의한 후
 // [System.Serializable]
-// public class CharactorInfo : ICSVFormat
+// public class CharactorInfo : IJsonFormat
 // {
 //     public int number;
 //     public string name;
@@ -18,28 +18,28 @@ using UnityEngine;
 //     public long ID { get { return (long)number; } }
 // }
 //
-// 위와 같이 csv 형태의 구조체 정의 후 아래와 같이 접근하여 사용
-// T info = DatabaseCSV<CharactorInfo>.Instance.GetInfo(id);
-// 참고로 데이터 파일이름은 구조체 class 이름으로 정의한다.(Resources/Database/CharactorInfo.csv)
+// 위와 같은 형태의 구조체 정의 후 아래와 같이 접근하여 사용
+// T info = DatabaseJSON<CharactorInfo>.Instance.GetInfo(id);
+// 참고로 데이터 파일이름은 구조체 class 이름으로 정의한다. Ex) Resources/Database/CharactorInfo.json
 
-public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
+public class DatabaseJSON<T> : Singleton<DatabaseJSON<T>> where T : IJsonFormat
 {
     private T[] mInfos = null;
     private Dictionary<long, T> mTable = new Dictionary<long, T>();
 
-    public DatabaseCSV()
+    public DatabaseJSON()
     {
         Load();
     }
     private void Load()
     {
-        if (mTable.Count > 0)
+        if(mTable.Count > 0)
             return;
 
         string filename = typeof(T).Name;
         TextAsset ta = Resources.Load<TextAsset>("Database/" + filename);
-        mInfos = CSVParser<T>.Deserialize(',', ta.text);
-        for (int i = 0; i < mInfos.Length; ++i)
+        mInfos = JsonHelpper.FromJsonArray<T>(ta.text);
+        for(int i = 0; i < mInfos.Length; ++i)
         {
             T info = mInfos[i];
             info.RowIndex = i;
@@ -50,15 +50,15 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
     public void Save(T info)
     {
 #if UNITY_EDITOR
-        if (mInfos == null || mInfos.Length <= 0)
+        if(mInfos == null || mInfos.Length <= 0)
             return;
-
+        
         mInfos[info.RowIndex] = info;
         mTable[info.ID] = info;
         string filename = typeof(T).Name;
-        string fullname = "./Assets/00_MetaSuit/Resources/Database/" + filename + ".csv";
-        string csvstring = CSVParser<T>.Serialize(',', mInfos);
-        System.IO.File.WriteAllText(fullname, csvstring);
+        string fullname = "./Assets/00_MetaSuit/Resources/Database/" + filename + ".json";
+        string jsonString = JsonHelpper.ToJsonArray<T>(mInfos);
+        System.IO.File.WriteAllText(fullname, jsonString);
 #endif
     }
 
@@ -72,7 +72,7 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
     }
     public T[] GetAllInfo()
     {
-        return new List<T>(mTable.Values).ToArray();
+        return mInfos;
     }
     public IEnumerable<T> Enums()
     {
@@ -83,9 +83,9 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
 
 
 // 실제 구조체에서 아래 항목을 override해서 사용
-public interface ICSVFormat
+public interface IJsonFormat
 {
     long ID { get { return -1; } } // 데이터 접근을 위한 id값
-    int RowIndex { get; set; } // 전체 csv 테이블상에서 각 Row의 인덱스정보
+    int RowIndex { get; set; } // 전체 테이블상에서 각 Row의 인덱스정보
 }
 
