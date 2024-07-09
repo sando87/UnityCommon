@@ -2,89 +2,22 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum CornerDirection
-{
-    LT, Top, RT,
-    LC, Center, RC,
-    LB, Bottom, RB
-}
-
 public class GridContainer
 {
-    public float GridSize { get; private set; }
+    public float GridSize { get; private set; } = 1;
     public Vector2 WorldBase { get; private set; } = Vector2.zero;
 
-    private GameObject mRootObject = null;
-    private Dictionary<Vector2Int, GameObject> mItems = new Dictionary<Vector2Int, GameObject>();
+    public GridContainer(float gridSize, Vector2 worldBase)
+    {
+        GridSize = gridSize;
+        WorldBase = worldBase;
+    }
 
     //초기 Grid 크기 및 위치 정보를 초기화 한다.
     public void Init(float gridSize, Vector2 baseWorldPos)
     {
         GridSize = gridSize;
         WorldBase = baseWorldPos;
-        mRootObject = new GameObject();
-        mRootObject.name = "GridRoot";
-    }
-    public IEnumerable<KeyValuePair<Vector2Int, GameObject>> Enums()
-    {
-        foreach (var item in mItems)
-            yield return item;
-    }
-    //items요소를 넣으면 Grid형태로 관리하고 위치를 다음 위치에 배치한다.
-    public void SnapAddItem(GameObject item, Vector2Int posIdx)
-    {
-        if(!mItems.ContainsKey(posIdx))
-        {
-            mItems[posIdx] = new GameObject(posIdx.ToString());
-            mItems[posIdx].transform.SetParent(mRootObject.transform);
-            mItems[posIdx].transform.position = ToPosition(posIdx.x, posIdx.y);
-        }
-
-        item.transform.SetParent(mItems[posIdx].transform);
-        item.transform.localPosition = Vector3.zero;
-    }
-    public void SnapAddItem(GameObject item, Vector2 worldPos)
-    {
-        Vector2Int posIdx = ToIndex(worldPos.x, worldPos.y);
-        if(!mItems.ContainsKey(posIdx))
-        {
-            mItems[posIdx] = new GameObject(posIdx.ToString());
-            mItems[posIdx].transform.SetParent(mRootObject.transform);
-            mItems[posIdx].transform.position = ToPosition(posIdx.x, posIdx.y);
-        }
-
-        item.transform.SetParent(mItems[posIdx].transform);
-        item.transform.localPosition = Vector3.zero;
-    }
-    public void Reset()
-    {
-        if(mRootObject != null)
-        {
-            GameObject.Destroy(mRootObject);
-            mRootObject = null;
-        }
-        GridSize = 1;
-        WorldBase = Vector2.zero;
-        mItems.Clear();
-    }
-    public GameObject GetRootFrame(Vector2Int posIdx)
-    {
-        if(!mItems.ContainsKey(posIdx))
-        {
-            return null;
-        }
-
-        return mItems[posIdx];
-    }
-    public GameObject GetRootFrame(float worldPosX, float worldPosY)
-    {
-        Vector2Int posIdx = ToIndex(worldPosX, worldPosY);
-        if(!mItems.ContainsKey(posIdx))
-        {
-            return null;
-        }
-
-        return mItems[posIdx];
     }
     public Vector2 ToPosition(int idxX, int idxY)
     {
@@ -92,40 +25,73 @@ public class GridContainer
         float y = WorldBase.y + idxY * GridSize;
         return new Vector2(x, y);
     }
+    public Vector2 ToPosition(Vector2Int posIdx)
+    {
+        return ToPosition(posIdx.x, posIdx.y);
+    }
+    public Vector2Int ToIndex(Vector2 worldPos)
+    {
+        return ToIndex(worldPos.x, worldPos.y);
+    }
     public Vector2Int ToIndex(float worldPosX, float worldPosY)
     {
-        worldPosX += GridSize * 0.5f;
-        worldPosY += GridSize * 0.5f;
-        if (worldPosX < 0) worldPosX -= GridSize;
-        if (worldPosY < 0) worldPosY -= GridSize;
-        int x = (int)((worldPosX - WorldBase.x) / GridSize);
-        int y = (int)((worldPosY - WorldBase.y) / GridSize);
+        float offsetX = worldPosX - WorldBase.x;
+        float offsetY = worldPosY - WorldBase.y;
+        int x = offsetX >= 0 ? (int)(offsetX / GridSize) : (int)(offsetX / GridSize) - 1;
+        int y = offsetY >= 0 ? (int)(offsetY / GridSize) : (int)(offsetY / GridSize) - 1;
         return new Vector2Int(x, y);
     }
-    //주변 Grid 아이템들을 반환한다.
-    public GameObject[] GetAroundItems(int idxX, int idxY)
+    public Vector2Int SnapToCloseIndex(float worldPosX, float worldPosY)
     {
-        List<GameObject> rets = new List<GameObject>();
-        for (int y = idxY - 1; y < idxY + 2; ++y)
+        return ToIndex(worldPosX + (GridSize * 0.5f), worldPosY + (GridSize * 0.5f));
+    }
+    public Vector2Int[] GetIndicies(Rect worldArea)
+    {
+        List<Vector2Int> rets = new List<Vector2Int>();
+
+        Vector2Int minIdx = ToIndex(worldArea.min);
+        Vector2Int maxIdx = ToIndex(worldArea.max);
+        for (int y = minIdx.y; y <= maxIdx.y; y++)
         {
-            for (int x = idxX - 1; x < idxX + 2; ++x)
+            for (int x = minIdx.x; x <= maxIdx.x; x++)
             {
-                if (x == idxX && y == idxY) continue;
-                GameObject rootFrame = GetRootFrame(x, y);
-                if (rootFrame != null)
-                {
-                    foreach(Transform child in rootFrame.transform)
-                        rets.Add(child.gameObject);
-                }
+                rets.Add(new Vector2Int(x, y));
             }
         }
         return rets.ToArray();
     }
-    //중간 아이템 기준으로 8개 방향(상하좌우대각선)의 아이템을 반환하다.
-    public GameObject GetNeighborRootFrame(int idxX, int idxY, CornerDirection pos)
+    public Vector2Int[] GetNeighbors4Way(Vector2Int center)
     {
-        int offIdxX = ((int)pos % 3) - 1;
-        int offIdxY = ((int)pos / 3) - 1;
-        return GetRootFrame(idxX + offIdxX, idxY + offIdxY);
+        List<Vector2Int> rets = new List<Vector2Int>();
+        rets.Add(center + new Vector2Int(1, 0));
+        rets.Add(center + new Vector2Int(0, 1));
+        rets.Add(center + new Vector2Int(-1, 0));
+        rets.Add(center + new Vector2Int(0, -1));
+        return rets.ToArray();
+    }
+    public IEnumerable<Vector2Int> GetNeighbors4WayEnum(Vector2Int center)
+    {
+        yield return (center + new Vector2Int(1, 0));
+        yield return (center + new Vector2Int(0, 1));
+        yield return (center + new Vector2Int(-1, 0));
+        yield return (center + new Vector2Int(0, -1));
+    }
+    public Vector2Int[] GetNeighbors8Way(Vector2Int center)
+    {
+        List<Vector2Int> rets = new List<Vector2Int>();
+        rets.Add(center + new Vector2Int(1, 0));
+        rets.Add(center + new Vector2Int(1, 1));
+        rets.Add(center + new Vector2Int(0, 1));
+        rets.Add(center + new Vector2Int(-1, 1));
+        rets.Add(center + new Vector2Int(-1, 0));
+        rets.Add(center + new Vector2Int(-1, -1));
+        rets.Add(center + new Vector2Int(0, -1));
+        rets.Add(center + new Vector2Int(1, -1));
+        return rets.ToArray();
+    }
+    public void Reset()
+    {
+        GridSize = 1;
+        WorldBase = Vector2.zero;
     }
 }

@@ -146,6 +146,10 @@ public struct MySerializableInfo
     public string fieldType;
     public string fieldName;
     public string fieldValue;
+    public bool isEnum;
+    public string enumNames;
+
+    public bool IsHide { get; set; }
 }
 
 [System.Serializable]
@@ -165,5 +169,57 @@ public class CustomEnumSelector
     {
         string[] peices = typeString.Split(new string[] { "(", ")" }, StringSplitOptions.None);
         SelectList = peices[1].Split(new string[] { "," }, StringSplitOptions.None);
+    }
+}
+
+[System.Serializable]
+public class CustomStringSelector
+{
+    public string[] SelectList = null;
+
+    public int SelectedIndex { get { return GetIndex(); } }
+    public string SelectedName { get; set; } = "";
+
+    public string ToFieldType()
+    {
+        string list = String.Join(",", SelectList);
+        return typeof(CustomStringSelector).Name + "(" + list + ")";
+    }
+    public void FromFieldType(string typeString)
+    {
+        string[] peices = typeString.Split(new string[] { "(", ")" }, StringSplitOptions.None);
+        SelectList = peices[1].Split(new string[] { "," }, StringSplitOptions.None);
+    }
+    int GetIndex()
+    {
+        for (int i = 0; i < SelectList.Length; ++i)
+            if (SelectList[i].Equals(SelectedName))
+                return i;
+        return 0;
+    }
+}
+
+[System.Serializable]
+public class IntSelectorButton
+{
+    public int[] SelectList = new int[4] { 0, 90, 180, 270 };
+
+    public int SelectedIndex { get; set; } = 0;
+
+    public int CurValue { get { return SelectList[SelectedIndex]; } }
+
+    public string ToFieldType()
+    {
+        string list = String.Join(",", SelectList);
+        return typeof(IntSelectorButton).Name + "(" + list + ")";
+    }
+    public void FromFieldType(string typeString)
+    {
+        string[] peices = typeString.Split(new string[] { "(", ")" }, StringSplitOptions.None);
+        string[] values = peices[1].Split(new string[] { "," }, StringSplitOptions.None);
+        List<int> rets = new List<int>();
+        foreach (string val in values)
+            rets.Add(int.Parse(val));
+        SelectList = rets.ToArray();
     }
 }

@@ -111,14 +111,19 @@ namespace Consolation
 
         #region MonoBehaviour Messages
 
+        void Awake()
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+
         void OnDisable()
         {
-           Application.logMessageReceivedThreaded -= HandleLogThreaded;
+            Application.logMessageReceivedThreaded -= HandleLogThreaded;
         }
-        
+
         void OnEnable()
         {
-           Application.logMessageReceivedThreaded += HandleLogThreaded;
+            Application.logMessageReceivedThreaded += HandleLogThreaded;
         }
 
         void OnGUI()
@@ -172,7 +177,7 @@ namespace Consolation
 
         public void Init()
         {
-            if(!isInited)
+            if (!isInited)
             {
                 isInited = true;
                 Application.logMessageReceivedThreaded += HandleLogThreaded;

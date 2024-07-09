@@ -11,12 +11,49 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
 
     private Dictionary<string, Transform> mObjectPool = new Dictionary<string, Transform>();
 
+    public GameObject Instantiate(GameObject prefab)
+    {
+        // 본체가 씬상에 이미 생성된 상태일때는 그냥 이름으로 key설정하고
+        // Asset상태로 있는 경우에는 AssetID를 추가하여 key로 설정한다
+        string key = prefab.name;
+        if (prefab.scene.rootCount <= 0)
+        {
+            key += prefab.GetInstanceID();
+        }
+
+        // 요청한 객체가 할당 가능하지 확인하고 불가능 하면 추가로 객체 생성한다.
+        if (!IsAllocable(key))
+        {
+            if (!AllocObjects(key, prefab))
+                return null;
+        }
+
+        // Pool에서 실제 요청한 객체 하나를 빼와서 반환해준다
+        Transform obj = mObjectPool[key].GetChild(0);
+        obj.SetParent(null);
+        obj.gameObject.SetActive(true);
+        return obj.gameObject;
+    }
+    public GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
+    {
+        GameObject obj = Instantiate(prefab);
+        if (obj == null)
+        {
+            return null;
+        }
+
+        obj.transform.position = position;
+        obj.transform.rotation = rotation;
+        obj.transform.SetParent(parent);
+        return obj;
+    }
+
     public GameObject Instantiate(string resourcesPath)
     {
         // 요청한 객체가 할당 가능하지 확인하고 불가능 하면 추가로 객체 생성한다.
-        if(!IsAllocable(resourcesPath))
+        if (!IsAllocable(resourcesPath))
         {
-            if(!AllocObjects(resourcesPath))
+            if (!AllocObjects(resourcesPath))
                 return null;
         }
 
@@ -30,34 +67,34 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
     public GameObject Instantiate(string resourcesPath, Vector3 position, Quaternion rotation, Transform parent = null)
     {
         GameObject obj = Instantiate(resourcesPath);
-        if(obj == null)
+        if (obj == null)
         {
             return null;
         }
-        
+
         obj.transform.position = position;
         obj.transform.rotation = rotation;
         obj.transform.SetParent(parent);
         return obj;
     }
-    
+
     public GameObject Instantiate(string resourcesPath, Transform parent = null)
     {
         GameObject obj = Instantiate(resourcesPath);
-        if(obj == null)
+        if (obj == null)
         {
             return null;
         }
-        
-        if(parent != null)
+
+        if (parent != null)
             obj.transform.SetParent(parent);
-            
+
         return obj;
     }
 
     public GameObject InstantiateVFX(string prefabNameInVFXPath, Vector3 position, Quaternion rotation, float dir, Transform parent = null)
     {
-        if(prefabNameInVFXPath.Length <= 0)
+        if (prefabNameInVFXPath.Length <= 0)
             return null;
 
         GameObject vfx = Instantiate(Consts.VFXPath + prefabNameInVFXPath, position, rotation, parent);
@@ -66,14 +103,14 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
     }
     public GameObject InstantiateVFX(string prefabNameInVFXPath, Vector3 position, Quaternion rotation, Transform parent = null)
     {
-        if(prefabNameInVFXPath.Length <= 0)
+        if (prefabNameInVFXPath.Length <= 0)
             return null;
 
         return Instantiate(Consts.VFXPath + prefabNameInVFXPath, position, rotation, parent);
     }
     public GameObject InstantiateVFX(string prefabNameInVFXPath, Transform parent = null)
     {
-        if(prefabNameInVFXPath.Length <= 0)
+        if (prefabNameInVFXPath.Length <= 0)
             return null;
 
         return Instantiate(Consts.VFXPath + prefabNameInVFXPath, parent);
@@ -82,25 +119,34 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
     // 요청한 객체가 할당 가능한지 여부 확인
     private bool IsAllocable(string path)
     {
-        if(mObjectPool.ContainsKey(path))
+        if (mObjectPool.ContainsKey(path))
         {
             return mObjectPool[path].childCount > 0;
         }
         return false;
     }
     // 요청한 객체가 Pool에 없을경우 10개의 객체를 미리 생성
-    private bool AllocObjects(string resourcesPath)
+    private bool AllocObjects(string resourcesPath, GameObject prefab = null)
     {
         // 프리팹 로딩
-        GameObject prefab = ResourcesCache.Load<GameObject>(resourcesPath);
         if (prefab == null)
         {
-            LOG.warn();
+            prefab = ResourcesCache.Load<GameObject>(resourcesPath);
+            if (prefab == null)
+            {
+                LOG.warn();
+                return false;
+            }
+        }
+
+        if (prefab.GetComponent<ObjectPoolable>() == null)
+        {
+            LOG.trace(resourcesPath + "," + prefab.name);
             return false;
         }
 
         // 최초 요청시에는 그룹 관리를 위한 부모 객체 생성
-        if(!mObjectPool.ContainsKey(resourcesPath))
+        if (!mObjectPool.ContainsKey(resourcesPath))
         {
             GameObject newParent = new GameObject();
             newParent.transform.SetParent(transform);
@@ -114,7 +160,7 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
         {
             GameObject newObj = GameObject.Instantiate(prefab, parentTr);
             newObj.gameObject.SetActive(false);
-            newObj.SetValue(PoolingGroup, resourcesPath);
+            newObj.GetComponent<ObjectPoolable>().PoolingParent = parentTr;
         }
         return true;
     }
@@ -122,36 +168,40 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
     public void DestroyReturn(GameObject obj)
     {
         // 어느 그룹쪽으로 반환해야할지 정보를 가져옴
-        object groupID = obj.GetValue(PoolingGroup);
-        if(groupID == null)
+        ObjectPoolable poolingObj = obj.GetComponent<ObjectPoolable>();
+        if (poolingObj == null)
         {
             //풀링 대상이 아니므로 그냥 삭제
-            LOG.warn();
+            LOG.warn(obj.name);
             Destroy(obj);
+            return;
         }
 
         // 대상객체가 이미 풀링 안에 있는 상태이면 그냥 반환
-        if(IsAlreadyInPoolingGroup(obj))
+        if (IsAlreadyInPoolingGroup(obj))
         {
             return;
         }
 
         // 다 사용한 객체는 재활용을 위해 다시 Pool에 넣어준다
-        string resourcesPath = groupID as string;
-        Transform parentTr = mObjectPool[resourcesPath];
+        Transform parentTr = poolingObj.PoolingParent;
         obj.transform.SetParent(parentTr);
         obj.SetActive(false);
     }
 
     public void DestroyReturnAfter(GameObject obj, float delay)
     {
-        if(delay <= 0)
+        if (delay <= 0)
         {
             DestroyReturn(obj);
         }
         else
         {
-            this.ExDelayedCoroutine(delay, () => DestroyReturn(obj));
+            this.ExDelayedCoroutine(delay, () =>
+            {
+                if (obj != null)
+                    DestroyReturn(obj);
+            });
         }
     }
 
@@ -163,11 +213,11 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
 
     public bool IsAlreadyInPoolingGroup(GameObject obj)
     {
-        if(obj.activeSelf)
+        if (obj.activeSelf)
             return false;
 
         ObjectPooling poolRoot = obj.GetComponentInParent<ObjectPooling>();
-        if(poolRoot == null)
+        if (poolRoot == null)
             return false;
 
         return true;
@@ -175,7 +225,7 @@ public class ObjectPooling : SingletonMono<ObjectPooling>
 
     public static bool IsPoolingable(GameObject obj)
     {
-        return obj.GetValue(PoolingGroup) != null;
+        return obj.GetComponent<ObjectPoolable>() != null && obj.GetComponent<ObjectPoolable>().PoolingParent != null;
     }
 }
 
@@ -183,7 +233,7 @@ public static class ObjectPoolingHelper
 {
     public static GameObject ReturnAfter(this GameObject obj, float delay = 0)
     {
-        if(obj == null) return null;
+        if (obj == null) return null;
         ObjectPooling.Instance.DestroyReturnAfter(obj, delay);
         return obj;
     }
