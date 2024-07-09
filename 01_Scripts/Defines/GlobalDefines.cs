@@ -118,6 +118,7 @@ public class Consts
     public const string MapThemePath = "MapThemes/";
     public const string VFXPath = "VFX/";
     public const string SFXPath = "Sound/SFX/InGame/";
+    public const string PathAudioClipData = "Sound/AudioAsset/"; // AudioClipData 리소스 정보들이 있는 경로
 }
 
 

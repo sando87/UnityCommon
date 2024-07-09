@@ -51,7 +51,7 @@ public class LanguageController : Singleton<LanguageController>
     private void _LoadListFromFile()
     {
         // CSV 파일을 읽어와서 리스트에 넣어줌.
-        languageListFromCSVFile = CSVReader.Read("language_list");
+        // languageListFromCSVFile = CSVReader.Read("language_list");
     }
 
     // 언어 리스트 리턴

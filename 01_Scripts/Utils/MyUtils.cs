@@ -1088,6 +1088,16 @@ public static class MyUtils
     {
         return (posA - posB).sqrMagnitude <= (distance * distance);
     }
+    public static string RemoveFileExtension(this string filename)
+    {
+        int idx = filename.Length - 1;
+        for (; idx >= 0; idx--)
+        {
+            if (filename[idx].Equals('.'))
+                break;
+        }
+        return idx > 0 ? filename.Substring(0, idx) : filename;
+    }
 }
 
 // MyUtils End =================================================
