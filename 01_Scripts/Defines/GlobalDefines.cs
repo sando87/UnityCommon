@@ -1,5 +1,7 @@
-// using System;
-// using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 // public enum LanguageType
 // {
@@ -103,8 +105,6 @@
 //     KeepPressing = 1 << 3, // 키를 지속적으로 누르고 있을경우 계속 감지
 //     All = ~0,
 // }
-
-using UnityEngine;
 
 public class Consts
 {
@@ -210,4 +210,57 @@ public class AnimParam
     public static readonly int IsLeftSide = Animator.StringToHash("IsLeftSide");
     public static readonly int IsLoop = Animator.StringToHash("IsLoop");
     public static readonly int IsLanding = Animator.StringToHash("IsLanding");
+}
+
+class RandomSequence
+{
+    // 0 ~ maxValue사이의 랜덤값을 겹치지 않게 반환
+
+    private int[] mNumbers = null;
+    private int mIndex = 0;
+    public RandomSequence(int maxValue)
+    {
+        System.Random ran = new System.Random();
+        List<int> values = new List<int>();
+        for (int i = 0; i <= maxValue; ++i)
+            values.Add(i);
+        values.Sort((a, b) => { return ran.Next(-1, 1); });
+        mNumbers = values.ToArray();
+        mIndex = 0;
+    }
+    public int GetNext()
+    {
+        mIndex = (mIndex + 1) % mNumbers.Length;
+        return mNumbers[mIndex];
+    }
+}
+
+public enum DamageKind
+{
+    Normal, Fire
+}
+public struct DamageProp
+{
+    public DamageKind type;
+    public float damage;
+    public DamageProp(float _damage) { this.damage = _damage; type = DamageKind.Normal; }
+    public DamageProp(float _damage, DamageKind _type) { this.damage = _damage; this.type = _type; }
+
+    // DamageProp형을 float형으로 암시적 형변환 가능 예) float damage = new DamageProp(_damage);
+    public static implicit operator float(DamageProp info) => info.damage;
+
+    // float형을 DamageProp로 암시적 형변환 가능 예) DamageProp info = 1.0f;
+    public static implicit operator DamageProp(float damage) => new DamageProp(damage);
+
+    public static DamageProp operator +(DamageProp a, DamageProp b)
+        => new DamageProp(a.damage + b.damage, a.type);
+    public static DamageProp operator +(DamageProp a, float _damage)
+        => new DamageProp(a.damage + _damage, a.type);
+
+    public static DamageProp operator -(DamageProp a, DamageProp b)
+        => new DamageProp(a.damage - b.damage, a.type);
+    public static DamageProp operator -(DamageProp a, float _damage)
+        => new DamageProp(a.damage - _damage, a.type);
+
+    public override string ToString() => $"{damage}";
 }

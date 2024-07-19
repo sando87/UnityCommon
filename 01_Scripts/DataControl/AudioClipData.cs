@@ -20,7 +20,7 @@ public class AudioClipData : ScriptableObject
             return;
 
         string path = UnityEditor.AssetDatabase.GetAssetPath(obj.GetInstanceID());
-        path = path.RemoveFileExtension();
+        path = path.ExRemoveFileExtension();
 
         List<AudioClip> clips = new List<AudioClip>();
         foreach(Object clip in UnityEditor.Selection.objects)

@@ -20,87 +20,11 @@ using UnityEditor.SceneManagement;
 
 #endif
 
-
-
 // Util Class ================================================
-class RandomSequence
+
+public class MyUtils
 {
-    // 0 ~ maxValue사이의 랜덤값을 겹치지 않게 반환
-
-    private int[] mNumbers = null;
-    private int mIndex = 0;
-    public RandomSequence(int maxValue)
-    {
-        System.Random ran = new System.Random();
-        List<int> values = new List<int>();
-        for (int i = 0; i <= maxValue; ++i)
-            values.Add(i);
-        values.Sort((a, b) => { return ran.Next(-1, 1); });
-        mNumbers = values.ToArray();
-        mIndex = 0;
-    }
-    public int GetNext()
-    {
-        mIndex = (mIndex + 1) % mNumbers.Length;
-        return mNumbers[mIndex];
-    }
-}
-
-public enum DamageKind
-{
-    Normal, Fire
-}
-public struct DamageProp
-{
-    public DamageKind type;
-    public float damage;
-    public DamageProp(float _damage) { this.damage = _damage; type = DamageKind.Normal; }
-    public DamageProp(float _damage, DamageKind _type) { this.damage = _damage; this.type = _type; }
-
-    // DamageProp형을 float형으로 암시적 형변환 가능 예) float damage = new DamageProp(_damage);
-    public static implicit operator float(DamageProp info) => info.damage;
-
-    // float형을 DamageProp로 암시적 형변환 가능 예) DamageProp info = 1.0f;
-    public static implicit operator DamageProp(float damage) => new DamageProp(damage);
-
-    public static DamageProp operator +(DamageProp a, DamageProp b)
-        => new DamageProp(a.damage + b.damage, a.type);
-    public static DamageProp operator +(DamageProp a, float _damage)
-        => new DamageProp(a.damage + _damage, a.type);
-
-    public static DamageProp operator -(DamageProp a, DamageProp b)
-        => new DamageProp(a.damage - b.damage, a.type);
-    public static DamageProp operator -(DamageProp a, float _damage)
-        => new DamageProp(a.damage - _damage, a.type);
-
-    public override string ToString() => $"{damage}";
-}
-
-
-public static class MyUtils
-{
-    public static bool IsHighBitFlag(int mask, int index)
-    {
-        return (mask & (1 << index)) > 0;
-    }
-    public static int BitClear(this int val, int index)
-    {
-        return val & ~(1 << index);
-    }
-    public static int BitSet(this int val, int index)
-    {
-        return val | (1 << index);
-    }
     // System =====================================
-    public static T ToEnum<T>(this string value)
-    {
-        // 변환 오류인 경우 디폴트 값 리턴
-        if (!System.Enum.IsDefined(typeof(T), value))
-        {
-            return default(T);
-        }
-        return (T)System.Enum.Parse(typeof(T), value, true);
-    }
     public static string[] ToEnumStrings<T>()
     {
         return System.Enum.GetNames(typeof(T));
@@ -109,14 +33,13 @@ public static class MyUtils
     {
         return System.Enum.GetValues(typeof(T)).Length;
     }
-    public static T RandomEnum<T>(bool exceptFirst = false)
+    public static T RandomEnum<T>(bool exceptFirst = false, bool exceptLast = false)
     {
-        int enumVal = UnityEngine.Random.Range(exceptFirst ? 1 : 0, CountEnum<T>());
-        return (T)(object)enumVal;
-    }
-    public static T EnumParse<T>(string s)
-    {
-        return (T)Enum.Parse(typeof(T), s);
+        var enumValues = System.Enum.GetValues(typeof(T));
+        int firstIdx = exceptFirst ? 1 : 0;
+        int count = exceptLast ? enumValues.Length - 1 : enumValues.Length;
+        int curIdx = UnityEngine.Random.Range(firstIdx, count);
+        return (T)enumValues.GetValue(curIdx);
     }
     public static bool IsPercentHit(int percent)
     {
@@ -145,16 +68,6 @@ public static class MyUtils
             }
         }
         return filenames.ToArray();
-    }
-    public static string RemoveFileExtension(this string filename)
-    {
-        int idx = filename.Length - 1;
-        for (; idx >= 0; idx--)
-        {
-            if (filename[idx].Equals('.'))
-                break;
-        }
-        return idx > 0 ? filename.Substring(0, idx) : filename;
     }
     static public byte[] Serialize(object obj)
     {
@@ -306,100 +219,25 @@ public static class MyUtils
         }
         catch (Exception ex) { LOG.warn(ex.Message); }
     }
-    public static T GetPrivatePropertyValue<T>(this object obj, string propName)
-    {
-        if (obj == null) return default;
-        PropertyInfo pi = obj.GetType().GetProperty(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-        if (pi == null) return default;
-        return (T)pi.GetValue(obj, null);
-    }
-    public static T GetPrivateFieldValue<T>(this object obj, string propName)
-    {
-        if (obj == null) return default;
-        Type t = obj.GetType();
-        FieldInfo fi = null;
-        while (fi == null && t != null)
-        {
-            fi = t.GetField(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            t = t.BaseType;
-        }
-        if (fi == null) return default;
-        return (T)fi.GetValue(obj);
-    }
-    public static void SetPrivatePropertyValue<T>(this object obj, string propName, T val)
-    {
-        Type t = obj.GetType();
-        if (t.GetProperty(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) == null)
-            return;
-        t.InvokeMember(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.SetProperty | BindingFlags.Instance, null, obj, new object[] { val });
-    }
-    public static void SetPrivateFieldValue<T>(this object obj, string propName, T val)
-    {
-        if (obj == null) return;
-        Type t = obj.GetType();
-        FieldInfo fi = null;
-        while (fi == null && t != null)
-        {
-            fi = t.GetField(propName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            t = t.BaseType;
-        }
-        if (fi == null) return;
-        fi.SetValue(obj, val);
-    }
-    public static void InvokePrivateMethod(this object obj, string methodName, object[] methodParam)
-    {
-        MethodInfo dynMethod = obj.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
-        if (dynMethod == null) return;
-        dynMethod.Invoke(obj, methodParam);
-    }
-
     // Unity Common =====================================
 
-    // UI상의 RectTransform 영역을 World공간의 Rect로 변환.
-    public static Rect ToWorldRect(this RectTransform uiRect, Camera worldCamera)
-    {
-        Rect ret = new Rect();
-        Vector2 worldSize = ScreenRectToWorldRect(uiRect.rect.size, worldCamera);
-        ret.size = worldSize;
-        ret.center = uiRect.transform.position;
-        return ret;
-    }
-    // 동일한 스크린 좌표계의 rect 정보로 UI의 위치와 크기를 배치시킨다.
-    public static void SetRect(this RectTransform ui, RectTransform targetUI)
-    {
-        ui.sizeDelta = targetUI.rect.size;
-        ui.position = targetUI.position;
-    }
-    // world좌표계의 rect 위치로 UI의 위치와 크기를 배치시킨다.
-    public static void SetRectFromWorldRect(this RectTransform ui, Rect worldRect, Camera _cam = null)
-    {
-        Camera cam = _cam == null ? Camera.main : _cam;
-        // 실제 장비 해상도 기준의 스크린 좌표값
-        Vector2 screenRectMin = cam.WorldToScreenPoint(worldRect.min);
-        Vector2 screenRectMax = cam.WorldToScreenPoint(worldRect.max);
-        Vector2 screenRectSize = screenRectMax - screenRectMin;
-        // 유니티상에 설정된 레퍼런스 해상도 기준의 스크린 좌표값으로 변환 작업
-        CanvasScaler scaler = ui.GetComponentInParent<CanvasScaler>();
-        float wRatio = scaler.referenceResolution.x / Screen.width;
-        float hRatio = scaler.referenceResolution.y / Screen.height;
-
-        float ratio = wRatio * (1f - scaler.matchWidthOrHeight)
-                    + hRatio * (scaler.matchWidthOrHeight);
-        // 현재 UI RectTransform의 Inspector상에 들어가는 width, height 최종값
-        Vector2 sizeDelta = screenRectSize * ratio;
-        ui.sizeDelta = sizeDelta;
-        ui.position = worldRect.center;
-    }
     // world좌표계 너비를 실제 장비 기준 해상도 좌표계 너비로 변환
-    public static Vector2 SizeWorldToScreen2D(Vector2 size)
+    public static Vector2 WorldSizeToScreenSize(Vector2 size, Camera mainCamera)
     {
         // 실제 장비 해상도 기준의 스크린 좌표값
-        Vector2 screenA = Camera.main.WorldToScreenPoint(new Vector2(0, 0));
-        Vector2 screenB = Camera.main.WorldToScreenPoint(new Vector2(size.x, size.y));
+        Vector2 screenA = mainCamera.WorldToScreenPoint(new Vector2(0, 0));
+        Vector2 screenB = mainCamera.WorldToScreenPoint(new Vector2(size.x, size.y));
         return screenB - screenA;
     }
+    // 스크린 크기를 월드공간의 크기로 변환
+    public static Vector2 ScreenSizeToWorldSize(Vector2 size, Camera mainCamera)
+    {
+        Vector3 startPos = mainCamera.ScreenToWorldPoint(Vector3.zero);
+        Vector3 endPos = mainCamera.ScreenToWorldPoint(new Vector3(size.x, size.y, 0));
+        return new Vector2(endPos.x - startPos.x, endPos.y - startPos.y);
+    }
     // 실제 장비 해상도를 inspector에 들어가는 값기준으로 변경(캔버스 스캐일링 된..)
-    public static Vector2 SizeScreenToCavausScaled2D(Vector2 size, CanvasScaler scaler)
+    public static Vector2 ScreenSizeToCavausScaledSize(Vector2 size, CanvasScaler scaler)
     {
         // 유니티상에 설정된 레퍼런스 해상도 기준의 좌표값으로 변환 작업
         float wRatio = scaler.referenceResolution.x / Screen.width;
@@ -409,19 +247,8 @@ public static class MyUtils
         // 현재 UI RectTransform의 Inspector상에 들어가는 width 최종값
         return size * ratio;
     }
-    // world좌표계 너비를 unity inspector에 들어가는(캔버스 스캐일링 된) 좌표계 너비로 변환
-    public static Vector2 SizeWorldToCavausScaled2D(Vector2 size, CanvasScaler scaler)
-    {
-        Vector2 screenSize = SizeWorldToScreen2D(size);
-        return SizeScreenToCavausScaled2D(screenSize, scaler);
-    }
-    // 스크린 크기를 월드공간의 크기로 변환
-    public static Vector2 ScreenRectToWorldRect(Vector2 size, Camera mainCamera)
-    {
-        Vector3 startPos = mainCamera.ScreenToWorldPoint(Vector3.zero);
-        Vector3 endPos = mainCamera.ScreenToWorldPoint(new Vector3(size.x, size.y, 0));
-        return new Vector2(endPos.x - startPos.x, endPos.y - startPos.y);
-    }
+
+
     public static Vector3 Random(Vector3 pos, float range)
     {
         Vector3 ret = pos;
@@ -508,229 +335,8 @@ public static class MyUtils
         return subTyp.IsSubclassOf(baseType);
     }
 
-    public static Rect LimitRectMovement(this Rect targetRect, Rect limitArea)
-    {
-        Rect retArea = targetRect;
-        Vector2 cenPos = retArea.center;
-        if (retArea.width < limitArea.width)
-            cenPos.x = Mathf.Clamp(cenPos.x, limitArea.xMin + retArea.width * 0.5f, limitArea.xMax - retArea.width * 0.5f);
-        else
-            cenPos.x = limitArea.center.x;
-
-        if (retArea.height < limitArea.height)
-            cenPos.y = Mathf.Clamp(cenPos.y, limitArea.yMin + retArea.height * 0.5f, limitArea.yMax - retArea.height * 0.5f);
-        else
-            cenPos.y = limitArea.center.y;
-
-        retArea.center = cenPos;
-        return retArea;
-    }
 
 
-    // Extentions =====================================
-    public static void ExSetX(this Transform tr, float val)
-    {
-        tr.position = new Vector3(val, tr.position.y, tr.position.z);
-    }
-    public static void ExSetY(this Transform tr, float val)
-    {
-        tr.position = new Vector3(tr.position.x, val, tr.position.z);
-    }
-    public static void ExSetZ(this Transform tr, float val)
-    {
-        tr.position = new Vector3(tr.position.x, tr.position.y, val);
-    }
-    public static void ExSetLocalZ(this Transform tr, float val)
-    {
-        tr.localPosition = new Vector3(tr.localPosition.x, tr.localPosition.y, val);
-    }
-    public static void ExSetLocalY(this Transform tr, float val)
-    {
-        tr.localPosition = new Vector3(tr.localPosition.x, val, tr.localPosition.z);
-    }
-    public static void ExSetLocalX(this Transform tr, float val)
-    {
-        tr.localPosition = new Vector3(val, tr.localPosition.y, tr.localPosition.z);
-    }
-    public static void ExSetPosition2D(this Transform tr, Vector2 val)
-    {
-        tr.position = new Vector3(val.x, val.y, tr.position.z);
-    }
-    public static void ExSetLocalPosition2D(this Transform tr, Vector2 val)
-    {
-        tr.localPosition = new Vector3(val.x, val.y, tr.localPosition.z);
-    }
-    public static void ExLookAtPosition(this Transform tr, Vector3 position)
-    {
-        tr.transform.right = (position - tr.position).normalized;
-        //tr.rotation = Quaternion.LookRotation((position - tr.position).normalized);
-    }
-    // public static void ExLookAtPosition(this Transform tr, Vector3 position, float degMaxStep)
-    // {
-    //     tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation((position - tr.position).normalized), degMaxStep);
-    // }
-    public static void ExLookAtDirection(this Transform tr, Vector3 direction)
-    {
-        tr.transform.right = direction.normalized;
-        //tr.rotation = Quaternion.LookRotation(direction.normalized);
-    }
-    // public static void ExLookAtDirection(this Transform tr, Vector3 direction, float degMaxStep)
-    // {
-    //     Vector3 r = tr.eulerAngles;
-    //     transform.rotation = Quaternion.Euler(r.x, r.y, Mathf.LerpAngle(direction, target, i));
-
-    //     Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation(direction.normalized), degMaxStep).
-    //     tr.rotation = Quaternion.RotateTowards(tr.rotation, Quaternion.LookRotation(direction.normalized), degMaxStep);
-    // }
-    public static Vector2 ExToVector2(this Vector3 vec)
-    {
-        return new Vector2(vec.x, vec.y);
-    }
-    public static Vector3 ExToVector3(this Vector2 vec, float z = 0)
-    {
-        return new Vector3(vec.x, vec.y, z);
-    }
-    public static void ExSetAlpha(this Text text, float alpha)
-    {
-        Color color = text.color;
-        color.a = alpha;
-        text.color = color;
-    }
-    public static void ExSetAlpha(this SpriteRenderer sr, float alpha)
-    {
-        Color color = sr.color;
-        color.a = alpha;
-        sr.color = color;
-    }
-    public static void ExSetAlpha(this Image img, float alpha)
-    {
-        Color color = img.color;
-        color.a = alpha;
-        img.color = color;
-    }
-    public static void ExSetAlpha(this TextMesh text, float alpha)
-    {
-        Color color = text.color;
-        color.a = alpha;
-        text.color = color;
-    }
-    public static void ExSortRandomly<T>(this List<T> list)
-    {
-        if (list.Count <= 1)
-            return;
-
-        System.Random ran = new System.Random();
-        int n = list.Count;
-        while (n > 1)
-        {
-            n--;
-            int idx = ran.Next(n + 1);
-            T val = list[idx];
-            list[idx] = list[n];
-            list[n] = val;
-        }
-    }
-    public static void ExSortInCloseOrder(this List<Transform> list, Vector3 refPositioin)
-    {
-        list.Sort((a, b) =>
-        {
-            return (a.position - refPositioin).sqrMagnitude > (b.position - refPositioin).sqrMagnitude ? 1 : -1;
-        });
-    }
-    public static Coroutine ExForAWhileCoroutine(this MonoBehaviour mono, float seconds, Action func)
-    {
-        return mono.StartCoroutine(CoExForSecondsCall(func, seconds));
-    }
-    public static IEnumerator CoExForSecondsCall(Action EventEnd, float seconds)
-    {
-        float eclipsedTime = 0;
-        while (eclipsedTime < seconds)
-        {
-            EventEnd?.Invoke();
-            yield return null;
-            eclipsedTime += Time.deltaTime;
-        }
-    }
-    public static Coroutine ExRepeatCoroutine(this MonoBehaviour mono, float interval, Action func, int repeatCount = -1)
-    {
-        return mono.StartCoroutine(CoExRepeatCall(func, interval, repeatCount));
-    }
-    public static IEnumerator CoExRepeatCall(Action EventEnd, float interval, int repeatCount)
-    {
-        bool isInfiniteMode = repeatCount < 0;
-        int count = 0;
-        while (isInfiniteMode || count < repeatCount)
-        {
-            EventEnd?.Invoke();
-
-            if (interval > 0)
-                yield return newWaitForSeconds.Cache(interval);
-            else
-                yield return null;
-
-            count++;
-        }
-    }
-    public static void ExValueTweenCoroutine(this MonoBehaviour mono, float from, float to, float duration, Action<float> eventValue)
-    {
-        mono.StartCoroutine(CoExValueTween(from, to, duration, eventValue));
-    }
-    public static IEnumerator CoExValueTween(float from, float to, float duration, Action<float> eventValue)
-    {
-        float time = 0;
-        float currentValue = from;
-        while (time < duration)
-        {
-            float rate = time / duration;
-            currentValue = from * (1 - rate) + to * (rate);
-            eventValue?.Invoke(currentValue);
-            yield return null;
-            time += Time.deltaTime;
-        }
-        eventValue?.Invoke(to);
-    }
-    public static Coroutine ExConditionCoroutine(this MonoBehaviour mono, Func<bool> cond, Action func)
-    {
-        return mono.StartCoroutine(CoExConditionCall(cond, func));
-    }
-    public static IEnumerator CoExConditionCall(Func<bool> EventCondition, Action EventEnd)
-    {
-        yield return new WaitUntil(() => EventCondition.Invoke());
-        EventEnd?.Invoke();
-    }
-    public static Coroutine ExAfterFrameCoroutine(this MonoBehaviour mono, Action func)
-    {
-        return mono.StartCoroutine(CoExAfterFrameCall(func));
-    }
-    public static IEnumerator CoExAfterFrameCall(Action EventEnd)
-    {
-        yield return null;
-        EventEnd?.Invoke();
-    }
-    public static Coroutine ExDelayedCoroutine(this MonoBehaviour mono, float delay, Action func)
-    {
-        if (delay <= 0)
-        {
-            func?.Invoke();
-            return null;
-        }
-
-        return mono.StartCoroutine(CoExDelayCall(func, delay));
-    }
-    public static IEnumerator CoExDelayCall(Action EventEnd, float delay)
-    {
-        yield return newWaitForSeconds.Cache(delay);
-        EventEnd?.Invoke();
-    }
-    public static Coroutine ExDelayedCoroutineUnSacled(this MonoBehaviour mono, float delay, Action func)
-    {
-        return mono.StartCoroutine(CoExDelayCallUnSacled(func, delay));
-    }
-    public static IEnumerator CoExDelayCallUnSacled(Action EventEnd, float delay)
-    {
-        yield return new WaitForSecondsRealtime(delay);
-        EventEnd?.Invoke();
-    }
     public static string SecondsToMinSec(int playTime)
     {
         TimeSpan t = new TimeSpan(0, 0, playTime);
@@ -752,14 +358,14 @@ public static class MyUtils
         return layermask == (layermask | (1 << layer));
     }
 
-    public static void Snap(this Transform tr, float step = 1.0f / Consts.PixelPerUnit)
+    public static Vector3 SnapToClose(Vector3 pos, float step = 1.0f / Consts.PixelPerUnit)
     {
-        float x = (int)((tr.position.x + (step * 0.5f)) / step) * step;
-        float y = (int)((tr.position.y + (step * 0.5f)) / step) * step;
+        float x = (int)((pos.x + (step * 0.5f)) / step) * step;
+        float y = (int)((pos.y + (step * 0.5f)) / step) * step;
         // float z = (int)((tr.position.z + (step * 0.5f)) / step) * step;
-        tr.transform.position = new Vector3(x, y, tr.position.z);
+        return new Vector3(x, y, pos.z);
     }
-    public static Vector3Int ToSnapIndex(Vector3 worldPos, float step = 1.0f / Consts.PixelPerUnit)
+    public static Vector3Int SnapIndexToClose(Vector3 worldPos, float step = 1.0f / Consts.PixelPerUnit)
     {
         int x = (int)((worldPos.x + (step * 0.5f)) / step);
         int y = (int)((worldPos.y + (step * 0.5f)) / step);
@@ -778,135 +384,6 @@ public static class MyUtils
         Vector3 dir = end - start;
         Ray ray = new Ray(start, dir);
         return Physics.Raycast(ray, dir.magnitude, layerMask);
-    }
-
-    // 실제 객체 transform에 의해 변형된 collider 전방방향의 world좌표 반환
-    public static Vector3 Center(this BoxCollider box)
-    {
-        return box.transform.TransformPoint(box.center);
-    }
-    public static Vector3 Extents(this BoxCollider box)
-    {
-        Vector3 extents = box.FrontHead() - box.Center();
-        extents.x = Mathf.Abs(extents.x);
-        extents.y = Mathf.Abs(extents.y);
-        extents.z = 0.5f;
-        return extents;
-    }
-    public static Rect ToWorldRect(this BoxCollider box)
-    {
-        Rect rect = new Rect();
-        rect.size = box.size;
-        rect.center = box.Center();
-        return rect;
-    }
-    public static Rect ToRect(this Bounds bounds)
-    {
-        Rect rect = new Rect();
-        rect.size = bounds.size.ExToVector2();
-        rect.center = bounds.center.ExToVector2();
-        return rect;
-    }
-    public static Vector3 Front(this BoxCollider box, float offset = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + offset;
-        Vector3 localForwardPos = box.center + new Vector3(extentsX, 0, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 Back(this BoxCollider box, float offset = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + offset;
-        Vector3 localForwardPos = box.center + new Vector3(-extentsX, 0, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 Head(this BoxCollider box, float offset = 0)
-    {
-        float extentsY = (box.size.y * 0.5f) + offset;
-        Vector3 localForwardPos = box.center + new Vector3(0, extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 Foot(this BoxCollider box, float offset = 0)
-    {
-        float extentsY = (box.size.y * 0.5f) + offset;
-        Vector3 localForwardPos = box.center + new Vector3(0, -extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 FrontHead(this BoxCollider box, float offsetX = 0, float offsetY = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + (offsetX);
-        float extentsY = (box.size.y * 0.5f) + (offsetY);
-        Vector3 localForwardPos = box.center + new Vector3(extentsX, extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 FrontFoot(this BoxCollider box, float offsetX = 0, float offsetY = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + (offsetX);
-        float extentsY = (box.size.y * 0.5f) + (offsetY);
-        Vector3 localForwardPos = box.center + new Vector3(extentsX, -extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 BackFoot(this BoxCollider box, float offsetX = 0, float offsetY = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + (offsetX);
-        float extentsY = (box.size.y * 0.5f) + (offsetY);
-        Vector3 localForwardPos = box.center + new Vector3(-extentsX, -extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-    public static Vector3 BackHead(this BoxCollider box, float offsetX = 0, float offsetY = 0)
-    {
-        float extentsX = (box.size.x * 0.5f) + (offsetX);
-        float extentsY = (box.size.y * 0.5f) + (offsetY);
-        Vector3 localForwardPos = box.center + new Vector3(-extentsX, extentsY, 0);
-        return box.transform.TransformPoint(localForwardPos);
-    }
-
-
-
-    public static Bounds GetWorldBounds2D(this BoxCollider box)
-    {
-        Vector2 corner1 = box.FrontHead();
-        Vector2 corner2 = box.BackHead();
-        Vector2 corner3 = box.FrontFoot();
-        Vector2 corner4 = box.BackFoot();
-        float minX = MyUtils.Min(corner1.x, corner2.x, corner3.x, corner4.x);
-        float minY = MyUtils.Min(corner1.y, corner2.y, corner3.y, corner4.y);
-        float maxX = MyUtils.Max(corner1.x, corner2.x, corner3.x, corner4.x);
-        float maxY = MyUtils.Max(corner1.y, corner2.y, corner3.y, corner4.y);
-        Vector3 size = new Vector3(maxX - minX, maxY - minY, box.size.z);
-        Bounds bounds = new Bounds(box.Center(), size);
-        return bounds;
-    }
-    public static Vector3 Right(this Bounds bound, float offset = 0)
-    {
-        return bound.center += (Vector3.right * (bound.extents.x + offset));
-    }
-    public static Vector3 Left(this Bounds bound, float offset = 0)
-    {
-        return bound.center += (Vector3.left * (bound.extents.x + offset));
-    }
-    public static Vector3 Top(this Bounds bound, float offset = 0)
-    {
-        return bound.center += (Vector3.up * (bound.extents.y + offset));
-    }
-    public static Vector3 Bottom(this Bounds bound, float offset = 0)
-    {
-        return bound.center += (Vector3.down * (bound.extents.y + offset));
-    }
-    public static Vector3 RightTop(this Bounds bound, float offsetX = 0, float offsetY = 0)
-    {
-        return bound.center += new Vector3(bound.extents.x + offsetX, bound.extents.y + offsetY, 0);
-    }
-    public static Vector3 LeftTop(this Bounds bound, float offsetX = 0, float offsetY = 0)
-    {
-        return bound.center += new Vector3(-(bound.extents.x + offsetX), bound.extents.y + offsetY, 0);
-    }
-    public static Vector3 RightBottom(this Bounds bound, float offsetX = 0, float offsetY = 0)
-    {
-        return bound.center += new Vector3(bound.extents.x + offsetX, -(bound.extents.y + offsetY), 0);
-    }
-    public static Vector3 LeftBottom(this Bounds bound, float offsetX = 0, float offsetY = 0)
-    {
-        return bound.center += new Vector3(-(bound.extents.x + offsetX), -(bound.extents.y + offsetY), 0);
     }
 
     public static bool IsCooltimeOver(float prevTime, float cooltime)
@@ -1026,7 +503,7 @@ public static class MyUtils
     }
 
 
-    public static string[] GetStateNames(this Animator animator)
+    public static string[] GetAnimatorStateNames(Animator animator)
     {
         List<string> names = new List<string>();
         AnimatorController ac = animator.runtimeAnimatorController as AnimatorController;
@@ -1069,7 +546,7 @@ public static class MyUtils
         // EditorUtility.FocusProjectWindow();
         // Selection.activeObject = asset;
     }
-    public static void ExAddParameter(this AnimatorController ac, string name, UnityEngine.AnimatorControllerParameterType type, object defaultValue)
+    public static void AddParameterAnimatorController(AnimatorController ac, string name, UnityEngine.AnimatorControllerParameterType type, object defaultValue)
     {
         AnimatorControllerParameter pp = new AnimatorControllerParameter();
         pp.name = ac.MakeUniqueParameterName(name);
@@ -1384,30 +861,6 @@ public static class MyUtils
 
         return null;
     }
-    public static bool IsOutOfRange<T>(this T[] list, int index)
-    {
-        return index < 0 || index >= list.Length;
-    }
-    public static bool IsOutOfRange<T>(this List<T> list, int index)
-    {
-        return index < 0 || index >= list.Count;
-    }
-    public static void SetMinimum(this ref int val, int minValue)
-    {
-        val = Mathf.Max(val, minValue);
-    }
-    public static void SetMaximum(this ref int val, int maxValue)
-    {
-        val = Mathf.Min(val, maxValue);
-    }
-    public static void SetMinimum(this ref float val, float minValue)
-    {
-        val = Mathf.Max(val, minValue);
-    }
-    public static void SetMaximum(this ref float val, float maxValue)
-    {
-        val = Mathf.Min(val, maxValue);
-    }
 
 
     public static string[] FindAllFiles(string rootdir)
@@ -1422,165 +875,6 @@ public static class MyUtils
         return files;
     }
 
-    public static Transform FindChildAll(this Transform parent, int layerID)
-    {
-        foreach (Transform child in parent)
-        {
-            if (child.gameObject.layer == layerID)
-                return child;
-
-            if (child.childCount > 0)
-            {
-                Transform ret = child.FindChildAll(layerID);
-                if (ret != null)
-                    return ret;
-            }
-        }
-        return null;
-    }
-
-    public static Transform FindChildAll(this Transform parent, string name)
-    {
-        foreach (Transform child in parent)
-        {
-            if (child.name.Equals(name))
-                return child;
-
-            if (child.childCount > 0)
-            {
-                Transform ret = child.FindChildAll(name);
-                if (ret != null)
-                    return ret;
-            }
-        }
-        return null;
-    }
-
-    public static void FindChildAll(this Transform parent, string name, List<Transform> rets)
-    {
-        foreach (Transform child in parent)
-        {
-            if (child.name.Equals(name))
-                rets.Add(child);
-
-            if (child.childCount > 0)
-                child.FindChildAll(name, rets);
-        }
-    }
-
-    public static void FindChildAll<T>(this Transform me, List<T> rets, bool skipSubPrefab = false) where T : Component
-    {
-#if UNITY_EDITOR
-        if (skipSubPrefab)
-        {
-            // 해당 객체가 하위 프리팹이면
-            if (PrefabUtility.IsAnyPrefabInstanceRoot(me.gameObject))
-                return;
-        }
-#endif
-
-        T[] comps = me.GetComponents<T>();
-        foreach (T comp in comps)
-            rets.Add(comp);
-
-        foreach (Transform child in me)
-        {
-            child.FindChildAll<T>(rets, skipSubPrefab);
-        }
-    }
-
-    public static float CalculateTypingTime(string sentence, float letterDelay = 0.03f)
-    {
-        float time = 0.0f;
-
-        int spaceCount = 0;
-        int markCount = 0;
-        int normalCharCount = 0;
-
-        string[] array = new string[sentence.Length];
-
-        for (int i = 0; i < sentence.Length; i++)
-        {
-            array[i] = System.Convert.ToString(sentence[i]);
-        }
-
-        for (int i = 0; i < sentence.Length; i++)
-        {
-            if (array[i].Equals(" "))
-            {
-                spaceCount++;
-            }
-            else if (array[i].Equals("!") || array[i].Equals(",") || array[i].Equals("."))
-            {
-                markCount++;
-            }
-            else
-            {
-                normalCharCount++;
-            }
-        }
-
-        time = (spaceCount * (letterDelay * 2)) + (markCount * (letterDelay * 6)) + (normalCharCount * letterDelay) + 2.0f;
-
-        return time;
-    }
-
-    // 캐릭터 별로 타이핑 되면서, 스페이스, 느낌표, 마침표에서 조금 더 텀이 있게 타이핑 되도록 처리
-    public static IEnumerator TypeSentenceByWord(TextMeshProUGUI text, string sentence, float letterDelay = 0.03f)
-    {
-        string[] array = new string[sentence.Length];
-        for (int i = 0; i < sentence.Length; i++)
-        {
-            array[i] = System.Convert.ToString(sentence[i]);
-        }
-
-        text.text = array[0];
-
-        for (int i = 1; i < array.Length; ++i)
-        {
-            if (array[i].Equals(" "))
-            {
-                yield return new WaitForSeconds(letterDelay * 2);
-            }
-
-            text.text += array[i];
-
-            if (array[i].Equals("!") || array[i].Equals(",") || array[i].Equals("."))
-            {
-                yield return new WaitForSeconds(letterDelay * 6);
-            }
-
-            yield return new WaitForSeconds(letterDelay);
-        }
-    }
-
-    public static Vector3 RotateVector(this Vector3 vec, Vector3 axis, float degree)
-    {
-        return Quaternion.AngleAxis(degree, axis.normalized) * vec;
-    }
-
-    public static Vector3 ClampRotate(this Vector3 vec, Vector3 refAxis, float maxDegree)
-    {
-        float deg = Vector3.Angle(vec, refAxis);
-        if (deg < maxDegree)
-            return vec;
-
-        Vector3 upVec = Vector3.Cross(refAxis, vec);
-        return refAxis.RotateVector(upVec, maxDegree);
-    }
-
-    public static Dictionary<TEnum, T> LoadPrefabsToDictionary<TEnum, T>(string path)
-        where TEnum : Enum
-        where T : UnityEngine.Object
-    {
-        Dictionary<TEnum, T> prefabDict = Resources.LoadAll<T>(path)
-            .ToDictionary(
-                obj => EnumParse<TEnum>(obj.name),
-                obj => obj
-            );
-        return prefabDict;
-    }
-
     public static void SetLayerRecursively(GameObject obj, int layer)
     {
         obj.layer = layer;
@@ -1590,16 +884,6 @@ public static class MyUtils
             SetLayerRecursively(child.gameObject, layer);
         }
     }
-
-    // public static void SetTexts(this TextMeshProUGUI[] tmpArray, params string[] strArray)
-    // {
-    //     for(int i = 0; i < tmpArray.Length; i++)
-    //     {
-    //         if(i >= strArray.Length)
-    //             break;
-    //         tmpArray[i].text = strArray[i];
-    //     }
-    // }
 
     // 글로벌로 세팅되어 있는 렌더러 카메라의 특정 이름의 렌더링 찾기
     // public static ScriptableRendererFeature FindAndAssignTargetRenderFeature(string rendererFeatureName)

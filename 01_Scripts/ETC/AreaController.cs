@@ -69,13 +69,13 @@ public class AreaController : MonoBehaviour
         EdgeCenter.transform.localScale = new Vector3(mSize.x, mSize.y, 1);
         EdgeCenter.transform.position = centerPos;
         EdgeRight.transform.localScale = new Vector3(Thickness, mSize.y + Thickness, 1);
-        EdgeRight.transform.position = EdgeCenter.bounds.Right();
+        EdgeRight.transform.position = EdgeCenter.bounds.ExRight();
         EdgeLeft.transform.localScale = new Vector3(Thickness, mSize.y + Thickness, 1);
-        EdgeLeft.transform.position = EdgeCenter.bounds.Left();
+        EdgeLeft.transform.position = EdgeCenter.bounds.ExLeft();
         EdgeTop.transform.localScale = new Vector3(mSize.x + Thickness, Thickness, 1);
-        EdgeTop.transform.position = EdgeCenter.bounds.Top();
+        EdgeTop.transform.position = EdgeCenter.bounds.ExTop();
         EdgeBottom.transform.localScale = new Vector3(mSize.x + Thickness, Thickness, 1);
-        EdgeBottom.transform.position = EdgeCenter.bounds.Bottom();
+        EdgeBottom.transform.position = EdgeCenter.bounds.ExBottom();
     }
     private void UpdateCurrentEditMode()
     {

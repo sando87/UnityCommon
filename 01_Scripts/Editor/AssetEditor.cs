@@ -77,7 +77,7 @@ public class AssetEditor : MonoBehaviour
                 continue;
 
             scripts.Clear();
-            obj.transform.FindChildAll(scripts, true);
+            obj.transform.ExFindChildAll(scripts, true);
             foreach(T script in scripts)
             {
                 LOG.trace(script.gameObject.name);
@@ -341,7 +341,7 @@ public class AssetEditor : MonoBehaviour
         foreach(GameObject obj in Selection.gameObjects)
         {
             List<Transform> childs = new List<Transform>();
-            obj.transform.FindChildAll("key (2)", childs);
+            obj.transform.ExFindChildAll("key (2)", childs);
             foreach(Transform target in childs)
                 ChangeToFlashRenderer(target.gameObject, mat);
         }

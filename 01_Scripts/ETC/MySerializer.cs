@@ -99,11 +99,11 @@ public static class MySerializer
     public static void SetValue(MonoBehaviour obj, MySerializableInfo info)
     {
         object infoValue = ParseValue(info.fieldType, info.fieldValue);
-        obj.SetPrivateFieldValue(info.fieldName, infoValue);
+        obj.ExSetPrivateFieldValue(info.fieldName, infoValue);
     }
     public static T GetValue<T>(MonoBehaviour obj, MySerializableInfo info)
     {
-        return obj.GetPrivateFieldValue<T>(info.fieldName);
+        return obj.ExGetPrivateFieldValue<T>(info.fieldName);
     }
     private static object ParseValue(string fieldType, string value)
     {

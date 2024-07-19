@@ -56,11 +56,11 @@ namespace EditorGUITable
         {
             if (GUI.Button(new Rect(70, 4, 70, 20), "ToCSV"))
             {
-                property.serializedObject.targetObject.InvokePrivateMethod("ToCSV", null);
+                property.serializedObject.targetObject.ExInvokePrivateMethod("ToCSV", null);
             }
             if (GUI.Button(new Rect(150, 4, 70, 20), "FromCSV"))
             {
-                property.serializedObject.targetObject.InvokePrivateMethod("FromCSV", null);
+                property.serializedObject.targetObject.ExInvokePrivateMethod("FromCSV", null);
             }
 
             ProcessKeyInput();

@@ -66,7 +66,7 @@ public class LanguageController : Singleton<LanguageController>
         foreach (var each in languageListFromCSVFile)
         {
             string languageType = each["language"].ToString();
-            LanguageType type = languageType.ToEnum<LanguageType>();
+            LanguageType type = languageType.ExToEnum<LanguageType>();
             if (lang == type)
             {
                 return each["text"].ToString();
