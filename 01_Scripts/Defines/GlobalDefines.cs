@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using Unity.VisualScripting;
 using UnityEngine;
 
 // public enum LanguageType
@@ -119,6 +121,7 @@ public class Consts
     public const string VFXPath = "VFX/";
     public const string SFXPath = "Sound/SFX/InGame/";
     public const string PathAudioClipData = "Sound/AudioAsset/"; // AudioClipData 리소스 정보들이 있는 경로
+    public const string SuitTableFilePath = "Assets/UnityCommon/Resources/Database/";
 }
 
 
@@ -263,4 +266,16 @@ public struct DamageProp
         => new DamageProp(a.damage - _damage, a.type);
 
     public override string ToString() => $"{damage}";
+}
+
+[System.Serializable]
+public class SuitRawInfo : ICSVFormat
+{
+    [System.NonSerialized]
+    public string id = "";
+    public string name = "";
+    public float hp = 0;
+
+    public int RowIndex { get; set; }
+    public string ID { get { return id; } }
 }
