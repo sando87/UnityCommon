@@ -18,6 +18,10 @@ public static class MySerializer
                 info.childPath = pathName;
                 info.scriptName = comp.GetType().Name;
 
+                MySerializableAttribute att = field.GetCustomAttribute<MySerializableAttribute>();
+                if (att != null)
+                    info.IsHide = att.hide;
+
                 if (field.FieldType.Name.Equals(typeof(CustomEnumSelector).Name))
                 {
                     CustomEnumSelector fieldObj = (CustomEnumSelector)field.GetValue(comp);
@@ -27,6 +31,29 @@ public static class MySerializer
                     info.fieldType = fieldObj.ToFieldType();
                     info.fieldName = field.Name;
                     info.fieldValue = fieldObj.SelectedIndex.ToString();
+                    info.isEnum = false;
+                }
+                else if (field.FieldType.Name.Equals(typeof(CustomStringSelector).Name))
+                {
+                    CustomStringSelector fieldObj = (CustomStringSelector)field.GetValue(comp);
+                    if (fieldObj.SelectList == null || fieldObj.SelectList.Length <= 0)
+                        continue;
+
+                    info.fieldType = fieldObj.ToFieldType();
+                    info.fieldName = field.Name;
+                    info.fieldValue = fieldObj.SelectedName;
+                    info.isEnum = false;
+                }
+                else if (field.FieldType.Name.Equals(typeof(IntSelectorButton).Name))
+                {
+                    IntSelectorButton fieldObj = (IntSelectorButton)field.GetValue(comp);
+                    if (fieldObj.SelectList == null || fieldObj.SelectList.Length <= 0)
+                        continue;
+
+                    info.fieldType = fieldObj.ToFieldType();
+                    info.fieldName = field.Name;
+                    info.fieldValue = fieldObj.SelectedIndex.ToString();
+                    info.isEnum = false;
                 }
                 else if (field.FieldType.Name.Equals(typeof(Rect).Name))
                 {
@@ -34,12 +61,22 @@ public static class MySerializer
                     info.fieldType = field.FieldType.Name;
                     info.fieldName = field.Name;
                     info.fieldValue = rt.center.x + "," + rt.center.y + "," + rt.size.x + "," + rt.size.y;
+                    info.isEnum = false;
+                }
+                else if (field.FieldType.IsEnum)
+                {
+                    info.fieldType = typeof(int).Name;
+                    info.fieldName = field.Name;
+                    info.fieldValue = ((int)field.GetValue(comp)).ToString();
+                    info.isEnum = true;
+                    info.enumNames = String.Join("/", field.FieldType.GetEnumNames());
                 }
                 else
                 {
                     info.fieldType = field.FieldType.Name;
                     info.fieldName = field.Name;
                     info.fieldValue = field.GetValue(comp).ToString();
+                    info.isEnum = false;
                 }
 
                 rets.Add(info);
@@ -113,6 +150,10 @@ public static class MySerializer
             return float.Parse(value);
         else if (fieldType.Equals(typeof(bool).Name))
             return bool.Parse(value);
+        else if (fieldType.Equals(typeof(long).Name))
+            return long.Parse(value);
+        else if (fieldType.Equals(typeof(string).Name))
+            return value;
         else if (fieldType.Equals(typeof(Vector2Int).Name))
         {
             string[] pieces = value.Split(new string[] { "(", ",", " ", ")" }, StringSplitOptions.RemoveEmptyEntries);

@@ -315,6 +315,8 @@ public class MyUtils
         return EventSystem.current.IsPointerOverGameObject(-1); //mouse click
 #elif UNITY_ANDROID || UNITY_IPHONE
         return Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId); //finger touch 
+#else
+        return false;
 #endif
     }
     public static Vector2 GetPointerScreenPosition()
@@ -323,6 +325,8 @@ public class MyUtils
         return Input.mousePosition;
 #elif UNITY_ANDROID || UNITY_IPHONE
         return Input.touchCount > 0 ? Input.GetTouch(0).position : Vector2.zero;
+#else
+        return Vector2.zero;
 #endif
     }
 
@@ -819,6 +823,10 @@ public class MyUtils
                 return ParseFloat(value);
             else if (fieldType.Equals(typeof(bool).Name))
                 return bool.Parse(value);
+            else if (fieldType.Equals(typeof(long).Name))
+                return long.Parse(value);
+            else if (fieldType.Equals(typeof(string).Name))
+                return value;
             else if (fieldType.Equals(typeof(Vector2Int).Name))
             {
                 string[] pieces = value.Split(new string[] { "(", ",", " ", ")" }, StringSplitOptions.RemoveEmptyEntries);
@@ -883,6 +891,30 @@ public class MyUtils
         {
             SetLayerRecursively(child.gameObject, layer);
         }
+    }
+
+    // string spreadsheetId = "1pe25syvJ-AiuEs4kVEwtqGZD7TwsUvlOXe8mqmPkXn8";
+    // string sheetName = "플레이어테이블";
+    public static string LoadGoogleSheetData(string spreadsheetId, string sheetName)
+    {
+        string url = $"https://docs.google.com/spreadsheets/d/{spreadsheetId}/gviz/tq?tqx=out:csv&sheet={sheetName}";
+
+        // 웹 요청 생성
+        UnityEngine.Networking.UnityWebRequest www = UnityEngine.Networking.UnityWebRequest.Get(url);
+
+        // 요청 보내고 응답 대기
+        var operation = www.SendWebRequest();
+        while (!operation.isDone)
+            System.Threading.Thread.Sleep(100);
+
+        if (www.result != UnityEngine.Networking.UnityWebRequest.Result.Success)
+        {
+            LOG.trace($"구글 데이터 로드 실패: {www.error}");
+            return "";
+        }
+
+        string rawDataCsvFormat = www.downloadHandler.text;
+        return rawDataCsvFormat;
     }
 
     // 글로벌로 세팅되어 있는 렌더러 카메라의 특정 이름의 렌더링 찾기
