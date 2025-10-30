@@ -25,15 +25,16 @@ using UnityEditor.SceneManagement;
 public class MyUtils
 {
     // System =====================================
-    public static string[] ToEnumStrings<T>()
-    {
-        return System.Enum.GetNames(typeof(T));
-    }
-    public static int CountEnum<T>()
+    public static int EnumCount<T>() where T : Enum
     {
         return System.Enum.GetValues(typeof(T)).Length;
     }
-    public static T RandomEnum<T>(bool exceptFirst = false, bool exceptLast = false)
+    public static IEnumerable EnumForeach<T>() where T : Enum
+    {
+        foreach (T item in System.Enum.GetValues(typeof(T)))
+            yield return item;
+    }
+    public static T EnumRandomPick<T>(bool exceptFirst = false, bool exceptLast = false) where T : Enum
     {
         var enumValues = System.Enum.GetValues(typeof(T));
         int firstIdx = exceptFirst ? 1 : 0;
@@ -44,11 +45,6 @@ public class MyUtils
     public static bool IsPercentHit(int percent)
     {
         return (UnityEngine.Random.Range(0, 1000) % 100) < percent;
-    }
-    public static IEnumerable EnumForeach<T>()
-    {
-        foreach (T item in System.Enum.GetValues(typeof(T)))
-            yield return item;
     }
     static public int Sizeof<T>()
     {

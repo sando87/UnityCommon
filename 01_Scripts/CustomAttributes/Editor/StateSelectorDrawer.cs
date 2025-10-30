@@ -31,7 +31,7 @@ public class StateSelectorDrawer : PropertyDrawer
                 if(stateNameList == null)
                 {
                     enumNames = System.Enum.GetNames(typeof(AnimActionID));
-                    int enumCount = MyUtils.CountEnum<AnimActionID>();
+                    int enumCount = MyUtils.EnumCount<AnimActionID>();
                     int[] actionIDs = new int[enumCount];
                     for (int i = 0; i < enumCount; ++i)
                         actionIDs[i] = -1;
