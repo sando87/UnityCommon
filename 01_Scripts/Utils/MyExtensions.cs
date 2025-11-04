@@ -483,6 +483,13 @@ public static class MyExtensions
         rect.center = bounds.center.ExToVector2();
         return rect;
     }
+    public static Rect ExToRect(this BoxCollider2D col)
+    {
+        Rect rect = new Rect();
+        rect.size = col.size;
+        rect.center = col.transform.position.ExToVector2() + col.offset;
+        return rect;
+    }
     public static Vector3 ExFront(this BoxCollider box, float offset = 0)
     {
         float extentsX = (box.size.x * 0.5f) + offset;
