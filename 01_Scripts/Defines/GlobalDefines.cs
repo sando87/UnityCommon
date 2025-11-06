@@ -168,7 +168,7 @@ public enum AnimActionID
 public class LayerID
 {
     public static readonly int Player = LayerMask.NameToLayer("Player");
-    public static readonly int Enemies = LayerMask.NameToLayer("Enemies");
+    public static readonly int Enemy = LayerMask.NameToLayer("Enemy");
     public static readonly int TerrainHard = LayerMask.NameToLayer("TerrainHard");
     public static readonly int TerrainWeak = LayerMask.NameToLayer("TerrainWeak");
     public static readonly int Props = LayerMask.NameToLayer("Props");
