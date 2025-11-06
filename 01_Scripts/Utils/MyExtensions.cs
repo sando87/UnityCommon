@@ -48,7 +48,7 @@ public static class MyExtensions
         }
         return (T)System.Enum.Parse(typeof(T), value, true);
     }
-    
+
     public static void ExSetMinimum(this ref int val, int minValue)
     {
         val = Mathf.Max(val, minValue);
@@ -66,7 +66,7 @@ public static class MyExtensions
         val = Mathf.Min(val, maxValue);
     }
 
-    
+
     public static Vector3 ExRotateVector(this Vector3 vec, Vector3 axis, float degree)
     {
         return Quaternion.AngleAxis(degree, axis.normalized) * vec;
@@ -81,7 +81,7 @@ public static class MyExtensions
         Vector3 upVec = Vector3.Cross(refAxis, vec);
         return refAxis.ExRotateVector(upVec, maxDegree);
     }
-    
+
     public static string ExRemoveFileExtension(this string filename)
     {
         int idx = filename.Length - 1;
@@ -93,7 +93,7 @@ public static class MyExtensions
         return idx > 0 ? filename.Substring(0, idx) : filename;
     }
 
-    
+
     public static Transform ExFindChildAll(this Transform parent, int layerID)
     {
         foreach (Transform child in parent)
@@ -210,7 +210,7 @@ public static class MyExtensions
         dynMethod.Invoke(obj, methodParam);
     }
 
-    
+
     // 동일한 스크린 좌표계의 rect 정보로 UI의 위치와 크기를 배치시킨다.
     public static void ExSetRect(this RectTransform uiRect, RectTransform targetUI)
     {
@@ -237,7 +237,7 @@ public static class MyExtensions
         uiRect.sizeDelta = sizeDelta;
         uiRect.position = worldRect.center;
     }
-    
+
     public static Rect ExLimitRectMovement(this Rect targetRect, Rect limitArea)
     {
         Rect retArea = targetRect;
@@ -256,7 +256,7 @@ public static class MyExtensions
         return retArea;
     }
 
-    
+
     public static void ExSetWorldPosX(this Transform tr, float val)
     {
         tr.position = new Vector3(val, tr.position.y, tr.position.z);
@@ -331,20 +331,22 @@ public static class MyExtensions
 
 
 
-    
-    public static Coroutine ExForAWhileCoroutine(this MonoBehaviour mono, float seconds, Action func)
+
+    public static Coroutine ExForAWhileCoroutine(this MonoBehaviour mono, float duration, Action<float> func)
     {
-        return mono.StartCoroutine(CoExForSecondsCall(func, seconds));
+        return mono.StartCoroutine(CoExForSecondsCall(func, duration));
     }
-    private static IEnumerator CoExForSecondsCall(Action EventEnd, float seconds)
+    private static IEnumerator CoExForSecondsCall(Action<float> EventUpdate, float duration)
     {
         float eclipsedTime = 0;
-        while (eclipsedTime < seconds)
+        while (eclipsedTime < duration)
         {
-            EventEnd?.Invoke();
+            float rate = eclipsedTime / duration;
+            EventUpdate?.Invoke(rate);
             yield return null;
             eclipsedTime += Time.deltaTime;
         }
+        EventUpdate?.Invoke(1);
     }
     public static Coroutine ExRepeatCoroutine(this MonoBehaviour mono, float interval, Action func, int repeatCount = -1)
     {
@@ -422,7 +424,7 @@ public static class MyExtensions
     }
 
 
-    
+
     public static void ExSortRandomly<T>(this List<T> list)
     {
         if (list.Count <= 1)
