@@ -42,11 +42,20 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
     }
     private void Load()
     {
-        bool success = MyUtils.LoadFromFile(mFullPathName, false, out string textData);
-        if(!success)
+        if (mTable.Count > 0)
             return;
 
-        T[] infos = CSVParser<T>.Deserialize(',', textData);
+        string filename = typeof(T).Name;
+#if UNITY_EDITOR
+        string spreadsheetId = "1pRpEq-zAwYvoB5N_D5H--NKltHOscvOcBu8uOAA3ph8"; // 구글 스프레드시트 id
+        string sheetName = filename; // 구글 스프레드시트 시트 이름
+        string csvFormatRawData = MyUtils.LoadGoogleSheetData(spreadsheetId, sheetName);
+#else
+        TextAsset ta = Resources.Load<TextAsset>("Database/" + filename);
+        string csvFormatRawData = ta.text;
+#endif
+
+        T[] infos = CSVParser<T>.Deserialize(',', csvFormatRawData);
         for (int i = 0; i < infos.Length; ++i)
         {
             T info = infos[i];

@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 /// <summary>
@@ -22,7 +24,7 @@ using UnityEngine;
 /// }
 /// Person[] persons = CSVParser<Person>.Deserialize(',', csvStringText);
 /// </summary>
- 
+
 
 //csv 파일을 바로 구조체 형태까지 파싱해준다.
 public class CSVParser<TEntity>//where TEntity : class
@@ -75,7 +77,7 @@ public class CSVParser<TEntity>//where TEntity : class
             {
                 result = ObjectToString(field.GetValue(obj), pairs[i].FieldType);
             }
-            
+
             if (i == pairs.Length - 1)
             {
                 sbRows.AppendLine(result + CsvSeparator);
@@ -99,15 +101,48 @@ public class CSVParser<TEntity>//where TEntity : class
     }
     private static IEnumerable<TEntity> CustomDeserialize(string csvString)
     {
-        string[] arrayLinesCsv = csvString.Split("\n\r".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-        string[] columnsName = arrayLinesCsv[0].Split(_csvSeparator);
+        var recordPattern = new Regex(
+            @"(?:""(?:""""|[^""])*""(?:,|$))+",
+            RegexOptions.Compiled | RegexOptions.Multiline);
+
+        var fieldPattern = new Regex(
+            @"""((?:[^""]|"""")*)""(?:,|$)",
+            RegexOptions.Compiled);
+
+        List<Match> matches = recordPattern.Matches(csvString).ToList();
+
+        // string[] columnsName = arrayLinesCsv[0].Split(_csvSeparator);
+        // string[] columnsName = System.Text.RegularExpressions.Regex.Split(arrayLinesCsv[0], pattern);
+        List<string> columnsName = new List<string>();
+        var parts = fieldPattern.Matches(matches[0].Value);
+        foreach (Match part in parts)
+        {
+            string value = part.Groups[1].Value.Replace("\"\"", "\""); // 이중 따옴표 처리
+            columnsName.Add(value);
+        }
+
+        // for (int j = 0; j < columnsName.Length; j++)
+        // {
+        //     columnsName[j] = columnsName[j].Trim('"');
+        // }
+
         Type tp = typeof(TEntity);
         FieldInfo[] fields = tp.GetFields();
-        for (int i = 1; i < arrayLinesCsv.Length; i++)
+        for (int i = 1; i < matches.Count; i++)
         {
             object instance = Activator.CreateInstance(tp);
-            string[] columnsValue = arrayLinesCsv[i].Split(_csvSeparator);
-            for (int j = 0; j < columnsValue.Length; j++)
+
+            // string[] columnsValue = arrayLinesCsv[i].Split(_csvSeparator);
+            // string[] columnsValue = System.Text.RegularExpressions.Regex.Split(arrayLinesCsv[i], pattern);
+            List<string> columnsValue = new List<string>();
+            var subMatch = fieldPattern.Matches(matches[i].Value);
+            foreach (Match sub in subMatch)
+            {
+                string value = sub.Groups[1].Value.Replace("\"\"", "\""); // 이중 따옴표 처리
+                columnsValue.Add(value);
+            }
+
+            for (int j = 0; j < columnsValue.Count; j++)
             {
                 if (columnsName[j].Length <= 0) continue;
                 for (int x = 0; x < fields.Length; x++)
@@ -116,7 +151,7 @@ public class CSVParser<TEntity>//where TEntity : class
                     {
                         if (columnsValue[j] != null && columnsValue[j].Length > 0)
                         {
-                            object realObject = StringToObject(columnsValue[j], fields[x].FieldType);
+                            object realObject = StringToObject(columnsValue[j].Trim('"'), fields[x].FieldType);
                             fields[x].SetValue(instance, realObject);
                             break;
                         }
