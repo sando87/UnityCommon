@@ -12,13 +12,13 @@ public class SingletonMono<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T mInstance;
     public static T Instance
-    { 
+    {
         get
         {
             if (mInstance == null)
             {
                 //Scene상에 이미 매니저가 존재하고 있을 경우 참조(참고로 Disable된 상태의 객체는 검색 안됨)
-                mInstance = FindObjectOfType<T>();
+                mInstance = FindFirstObjectByType<T>();
 
                 if (mInstance == null)
                 {
@@ -44,12 +44,12 @@ public class SingletonMono<T> : MonoBehaviour where T : MonoBehaviour
     protected virtual void Awake()
     {
         T current = this as T;
-        if(mInstance == null)
+        if (mInstance == null)
         {
             mInstance = current;
             DontDestroyOnLoad(gameObject);
         }
-        else if(mInstance != current)
+        else if (mInstance != current)
         {
             // 싱글톤 객체가 두번 생성되었으니 해제
             Destroy(gameObject);
