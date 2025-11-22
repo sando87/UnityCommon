@@ -24,20 +24,11 @@ using UnityEngine;
 
 public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
 {
-    private bool mIsLoaded = false;
-    private string mFullPathName = "";
-    private List<T> mInfos = new List<T>();
-    private Dictionary<string, T> mTable = new Dictionary<string, T>();
+    private T[] mInfos = null;
+    private Dictionary<long, T> mTable = new Dictionary<long, T>();
 
-    // csv파일이 존재하는 path 예)"Assets/Resources/Database/"
-    public void Init(string _filePath)
+    public DatabaseCSV()
     {
-        mInfos.Clear();
-        mTable.Clear();
-
-        string filename = typeof(T).Name;
-        mFullPathName = _filePath + filename + ".csv";
-
         Load();
     }
     private void Load()
@@ -55,50 +46,36 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
         string csvFormatRawData = ta.text;
 #endif
 
-        T[] infos = CSVParser<T>.Deserialize(',', csvFormatRawData);
-        for (int i = 0; i < infos.Length; ++i)
+        mInfos = CSVParser<T>.Deserialize(',', csvFormatRawData);
+        for (int i = 0; i < mInfos.Length; ++i)
         {
-            T info = infos[i];
+            T info = mInfos[i];
             info.RowIndex = i;
-            string key = info.ID;
+            info.OnLoad();
+            long key = info.ID;
             mTable[key] = info;
-            mInfos.Add(info);
         }
-        mIsLoaded = true;
     }
-    public void EditAndSave(T info)
+    public void Save(T info)
     {
 #if UNITY_EDITOR
-        if (mInfos == null || !mTable.ContainsKey(info.ID))
+        if (mInfos == null || mInfos.Length <= 0)
             return;
 
         mInfos[info.RowIndex] = info;
         mTable[info.ID] = info;
-
+        string filename = typeof(T).Name;
+        string fullname = "./Assets/00_MetaSuit/Resources/Database/" + filename + ".csv";
         string csvstring = CSVParser<T>.Serialize(',', mInfos);
-        System.IO.File.WriteAllText(mFullPathName, csvstring);
-#endif
-    }
-    public void AddNewAndSave(T info)
-    {
-#if UNITY_EDITOR
-        if (mInfos == null || mTable.ContainsKey(info.ID))
-            return;
-
-        info.RowIndex = mInfos.Count;
-        mInfos.Add(info);
-        mTable[info.ID] = info;
-
-        string csvstring = CSVParser<T>.Serialize(',', mInfos);
-        System.IO.File.WriteAllText(mFullPathName, csvstring);
+        System.IO.File.WriteAllText(fullname, csvstring);
 #endif
     }
 
-    public bool HasInfo(string id)
+    public bool HasInfo(long id)
     {
         return mTable.ContainsKey(id);
     }
-    public T GetInfo(string id)
+    public T GetInfo(long id)
     {
         return mTable[id];
     }
@@ -110,12 +87,12 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
     {
         return new List<T>(mTable.Values).ToArray();
     }
-    public List<string> GetAllIDs()
+    public long[] GetAllIDs()
     {
-        List<string> ids = new List<string>();
+        List<long> ids = new List<long>();
         foreach (T info in mInfos)
             ids.Add(info.ID);
-        return ids;
+        return ids.ToArray();
     }
     public IEnumerable<T> Enums()
     {
@@ -128,7 +105,7 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
 // 실제 구조체에서 아래 항목을 override해서 사용
 public interface ICSVFormat
 {
-    string ID { get { return ""; } } // 데이터 접근을 위한 id값
+    long ID { get { return -1; } } // 데이터 접근을 위한 id값
     int RowIndex { get; set; } // 전체 csv 테이블상에서 각 Row의 인덱스정보
+    void OnLoad() { } // 추가로 초기화 할 데이터 있으면 여기서 처리
 }
-

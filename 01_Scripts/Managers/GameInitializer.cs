@@ -12,6 +12,6 @@ public class GameInitializer : MonoBehaviour
     void Awake()
     {
         // 게임 글로벌 리소스 데이터 초기화
-        DatabaseCSV<SuitRawInfo>.Instance.Init(Consts.SuitTableFilePath);
+        DatabaseCSV<SuitRawInfo>.Instance.HasInfo(0);
     }
 }

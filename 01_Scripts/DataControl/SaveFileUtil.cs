@@ -12,10 +12,6 @@ using UnityEngine;
 [System.Serializable]
 public class UserInfo : SaveableBase
 {
-    public const int LastestVersion = 3;
-    public override bool IsOldVersion() { return CurrentVersion < LastestVersion; }
-
-    public int CurrentVersion = LastestVersion;
     public int userID = 123;
     public string userName = "lee";
     public float key = 177.7f;
@@ -26,7 +22,7 @@ GameFileManager<UserInfo>.Save(filedata);
 
 /// </summary>
 
-public class GameFileManager<Filetype> where Filetype : SaveableBase, new()
+public class SaveFileUtil<Filetype> where Filetype : SaveableBase, new()
 {
     private static Filetype mFileInstance = null;
 
@@ -85,10 +81,6 @@ public class GameFileManager<Filetype> where Filetype : SaveableBase, new()
         {
             // 유저 데이터 구조가 이전 버전과의 호환성을 맞추기 위한 함수
             Filetype fileObj = JsonConvert.DeserializeObject<Filetype>(data);
-            if (fileObj.IsOldVersion())
-            {
-                fileObj.DoCompatibility();
-            }
             mFileInstance = fileObj;
             return fileObj;
         }
@@ -105,6 +97,6 @@ public class GameFileManager<Filetype> where Filetype : SaveableBase, new()
 
 public abstract class SaveableBase
 {
-    public virtual bool IsOldVersion() { return false; }
-    public virtual void DoCompatibility() { }
+    public int CurrentFileVersion = 0;
+    public bool IsOldVersion(int latestFileVersion) { return CurrentFileVersion < latestFileVersion; }
 }

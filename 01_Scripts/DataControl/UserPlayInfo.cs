@@ -33,15 +33,15 @@ public class UserPlayInfo : SaveableBase
         get { return StoryModeSlots[0].IsEmpty && StoryModeSlots[1].IsEmpty && StoryModeSlots[2].IsEmpty; }
     }
 
-    public override bool IsOldVersion()
-    {
-        if (float.TryParse(Version, out float fileVersion))
-        {
-            if (float.TryParse(Application.version, out float appVersion))
-            {
-                return fileVersion < appVersion;
-            }
-        }
-        return base.IsOldVersion();
-    }
+    // public override bool IsOldVersion()
+    // {
+    //     if (float.TryParse(Version, out float fileVersion))
+    //     {
+    //         if (float.TryParse(Application.version, out float appVersion))
+    //         {
+    //             return fileVersion < appVersion;
+    //         }
+    //     }
+    //     return base.IsOldVersion();
+    // }
 }

@@ -14,7 +14,7 @@ using UnityEngine;
 
 public static class DataManager
 {
-    
+
     // Chapter별 정보가 있는 테이블 정보 제공
     public static ChapterInfo[] GetAllChapterInfos()
     {
@@ -23,9 +23,9 @@ public static class DataManager
     public static ChapterInfo GetChapterInfo(string chapterName)
     {
         long id = ChapterInfo.NameToID(chapterName);
-        if(!DatabaseUnityChapters.Instance.HasInfo(id))
+        if (!DatabaseUnityChapters.Instance.HasInfo(id))
             return null;
-            
+
         return DatabaseUnityChapters.Instance.GetInfo(id);
     }
 
@@ -40,28 +40,28 @@ public static class DataManager
     // 사용자 세팅 정보
     public static UserSettingInfo GetUserSettingData()
     {
-        return GameFileManager<UserSettingInfo>.Load();
+        return SaveFileUtil<UserSettingInfo>.Load();
     }
     public static void SaveUserSettingData(UserSettingInfo data)
     {
-        GameFileManager<UserSettingInfo>.Save(data);
+        SaveFileUtil<UserSettingInfo>.Save(data);
     }
     public static void ResetUserSettingData()
     {
-        GameFileManager<UserSettingInfo>.ResetUserDataFile();
+        SaveFileUtil<UserSettingInfo>.ResetUserDataFile();
     }
-    
+
     // 사용자 게임 플레이 정보
     public static UserPlayInfo GetUserPlayData()
     {
-        return GameFileManager<UserPlayInfo>.Load();
+        return SaveFileUtil<UserPlayInfo>.Load();
     }
     public static void SaveUserPlayData(UserPlayInfo data)
     {
-        GameFileManager<UserPlayInfo>.Save(data);
+        SaveFileUtil<UserPlayInfo>.Save(data);
     }
     public static void ResetUserPlayData()
     {
-        GameFileManager<UserPlayInfo>.ResetUserDataFile();
+        SaveFileUtil<UserPlayInfo>.ResetUserDataFile();
     }
 }

@@ -10,7 +10,7 @@ using NaughtyAttributes;
 /// Editor상의 기능으로 추가 삭제 편집 기능 추가
 /// </summary>
 
-public class RecordSuit : MonoBehaviour
+public class DatabaseCSVEditor : MonoBehaviour
 {
     [Dropdown("IDList")]
     [OnValueChanged("OnIDChanged")]
@@ -27,30 +27,30 @@ public class RecordSuit : MonoBehaviour
 
     void Init()
     {
-        _Info = DatabaseCSV<SuitRawInfo>.Instance.GetInfo(_ID);
+        _Info = DatabaseCSV<SuitRawInfo>.Instance.GetInfo(_ID.GetHashCode());
     }
 
     [Button("Apply (Update to file)")]
     void ApplyRecord()
     {
-        if(DatabaseCSV<SuitRawInfo>.Instance.HasInfo(_Info.ID))
+        if (DatabaseCSV<SuitRawInfo>.Instance.HasInfo(_Info.ID))
         {
-            DatabaseCSV<SuitRawInfo>.Instance.EditAndSave(_Info);
+            DatabaseCSV<SuitRawInfo>.Instance.Save(_Info);
         }
     }
-    
+
     [Button("Revert (Load from file)")]
     void RevertRecord()
     {
         Init();
     }
-    
+
     [Button("Add New Record")]
     void AddNewRecord()
     {
-        EditorPopupNewID.ShowWindow((string newID) => 
+        EditorPopupNewID.ShowWindow((string newID) =>
         {
-            if(DatabaseCSV<SuitRawInfo>.Instance.HasInfo(newID))
+            if (DatabaseCSV<SuitRawInfo>.Instance.HasInfo(newID.GetHashCode()))
             {
                 EditorPopupMessageBox.ShowWindow("This ID already has.");
             }
@@ -58,18 +58,23 @@ public class RecordSuit : MonoBehaviour
             {
                 _Info = new SuitRawInfo();
                 _Info.id = newID;
-                DatabaseCSV<SuitRawInfo>.Instance.AddNewAndSave(_Info);
+                DatabaseCSV<SuitRawInfo>.Instance.Save(_Info);
                 _ID = newID;
             }
         });
     }
-    
-    List<string> IDList 
-    { 
-        get 
-        { 
-            DatabaseCSV<SuitRawInfo>.Instance.Init(Consts.SuitTableFilePath);
-            List<string> list = DatabaseCSV<SuitRawInfo>.Instance.GetAllIDs();
+
+    List<string> IDList
+    {
+        get
+        {
+            SuitRawInfo[] infos = DatabaseCSV<SuitRawInfo>.Instance.GetAllInfo();
+            List<string> list = new List<string>();
+            foreach (var info in infos)
+            {
+                list.Add(info.id);
+            }
+
             return list;
         }
     }
