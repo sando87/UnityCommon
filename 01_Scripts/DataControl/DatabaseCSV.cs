@@ -75,6 +75,11 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
     {
         return mTable.ContainsKey(id);
     }
+    public T GetRandomItem()
+    {
+        int randIndex = UnityEngine.Random.Range(0, mInfos.Length);
+        return mInfos[randIndex];
+    }
     public T GetInfo(long id)
     {
         return mTable[id];
