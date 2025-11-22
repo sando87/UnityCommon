@@ -127,7 +127,8 @@ public class CSVParser<TEntity>//where TEntity : class
         // }
 
         Type tp = typeof(TEntity);
-        FieldInfo[] fields = tp.GetFields();
+        FieldInfo[] fields = tp.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        PropertyInfo[] props = tp.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         for (int i = 1; i < matches.Count; i++)
         {
             object instance = Activator.CreateInstance(tp);
@@ -145,6 +146,7 @@ public class CSVParser<TEntity>//where TEntity : class
             for (int j = 0; j < columnsValue.Count; j++)
             {
                 if (columnsName[j].Length <= 0) continue;
+
                 for (int x = 0; x < fields.Length; x++)
                 {
                     if (columnsName[j] == fields[x].Name)
@@ -153,6 +155,19 @@ public class CSVParser<TEntity>//where TEntity : class
                         {
                             object realObject = StringToObject(columnsValue[j].Trim('"'), fields[x].FieldType);
                             fields[x].SetValue(instance, realObject);
+                            break;
+                        }
+                    }
+                }
+
+                for (int x = 0; x < props.Length; x++)
+                {
+                    if (columnsName[j] == props[x].Name)
+                    {
+                        if (columnsValue[j] != null && columnsValue[j].Length > 0 && props[x].CanWrite)
+                        {
+                            object realObject = StringToObject(columnsValue[j].Trim('"'), props[x].PropertyType);
+                            props[x].SetValue(instance, realObject);
                             break;
                         }
                     }
