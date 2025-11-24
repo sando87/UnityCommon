@@ -95,6 +95,31 @@ public class LOG
         string message = "## [" + ParseFilename(file) + "] [" + caller + "] [" + lineNumber + "] [" + val + "]";
         EventLogSimple?.Invoke(message);
     }
+
+    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD"), Conditional("DEBUG")]
+    static public void errorif(bool isError, string val = "",
+        [CallerFilePath] string file = null,
+        [CallerMemberName] string caller = null,
+        [CallerLineNumber] int lineNumber = 0)
+    {
+        if (!isError)
+            return;
+
+        if (EventLogDetail != null)
+        {
+            LogDetail log = new LogDetail();
+            log.logLevel = "error";
+            log.fileName = ParseFilename(file);
+            log.funcName = caller;
+            log.lineNumber = lineNumber.ToString();
+            log.message = val;
+            EventLogDetail?.Invoke(log);
+        }
+        string message = "## [" + ParseFilename(file) + "] [" + caller + "] [" + lineNumber + "] [" + val + "]";
+        // EventLogSimple?.Invoke(message);
+        throw new Exception(message);
+    }
+
     //호출 스택을 출력해줌
     static public void callStack(string val = "",
         [CallerFilePath] string file = null,
