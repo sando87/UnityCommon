@@ -40,28 +40,28 @@ public static class DataManager
     // 사용자 세팅 정보
     public static UserSettingInfo GetUserSettingData()
     {
-        return SaveFileUtil<UserSettingInfo>.Load();
+        return SaveFileManager<UserSettingInfo>.Load();
     }
     public static void SaveUserSettingData(UserSettingInfo data)
     {
-        SaveFileUtil<UserSettingInfo>.Save(data);
+        SaveFileManager<UserSettingInfo>.Save(data);
     }
     public static void ResetUserSettingData()
     {
-        SaveFileUtil<UserSettingInfo>.ResetUserDataFile();
+        SaveFileManager<UserSettingInfo>.ResetUserDataFile();
     }
 
     // 사용자 게임 플레이 정보
     public static UserPlayInfo GetUserPlayData()
     {
-        return SaveFileUtil<UserPlayInfo>.Load();
+        return SaveFileManager<UserPlayInfo>.Load();
     }
     public static void SaveUserPlayData(UserPlayInfo data)
     {
-        SaveFileUtil<UserPlayInfo>.Save(data);
+        SaveFileManager<UserPlayInfo>.Save(data);
     }
     public static void ResetUserPlayData()
     {
-        SaveFileUtil<UserPlayInfo>.ResetUserDataFile();
+        SaveFileManager<UserPlayInfo>.ResetUserDataFile();
     }
 }

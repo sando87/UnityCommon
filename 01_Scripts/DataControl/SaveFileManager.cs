@@ -22,7 +22,7 @@ GameFileManager<UserInfo>.Save(filedata);
 
 /// </summary>
 
-public class SaveFileUtil<Filetype> where Filetype : SaveableBase, new()
+public class SaveFileManager<Filetype> where Filetype : SaveableBase, new()
 {
     private static Filetype mFileInstance = null;
 
