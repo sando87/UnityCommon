@@ -594,5 +594,7 @@ public static class MyExtensions
         return bound.center += new Vector3(-(bound.extents.x + offsetX), -(bound.extents.y + offsetY), 0);
     }
 
+    public static bool IsInvalid(this string str) => string.IsNullOrWhiteSpace(str);
+
 }
 

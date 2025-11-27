@@ -41,8 +41,10 @@ public class DatabaseCSV<T> : Singleton<DatabaseCSV<T>> where T : ICSVFormat
         string spreadsheetId = "1pRpEq-zAwYvoB5N_D5H--NKltHOscvOcBu8uOAA3ph8"; // 구글 스프레드시트 id
         string sheetName = filename; // 구글 스프레드시트 시트 이름
         string csvFormatRawData = MyUtils.LoadGoogleSheetData(spreadsheetId, sheetName);
+        LOG.errorif(csvFormatRawData.IsInvalid());
 #else
         TextAsset ta = Resources.Load<TextAsset>("Database/" + filename);
+        LOG.errorif(ta.text.IsInvalid());
         string csvFormatRawData = ta.text;
 #endif
 
