@@ -37,7 +37,7 @@ namespace PahlBit
                 return;
             }
 
-            Animator animator = targetComponent.GetComponent<Animator>();
+            Animator animator = targetComponent.GetComponentInParent<BaseObject>().AnimHelper.GetComponent<Animator>();
             if (animator == null || animator.runtimeAnimatorController == null)
             {
                 EditorGUI.PropertyField(position, property, label);
