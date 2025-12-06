@@ -913,6 +913,30 @@ public class MyUtils
         return rawDataCsvFormat;
     }
 
+    
+    public static void OpenPersistentDataPath()
+    {
+        string path = Application.persistentDataPath;
+
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN   // Windows
+        // 경로가 공백 포함해도 열리도록 쌍따옴표 추가
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = path,
+            UseShellExecute = true, // 매우 중요: explorer로 경로를 정상 처리하게 함
+            Verb = "open" // Windows에서는 무시될 수도 있지만 넣어둠
+        };
+        System.Diagnostics.Process.Start(psi);
+
+#elif UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX // macOS
+        // macOS Finder에서 폴더 열기
+        System.Diagnostics.Process.Start("open", path);
+
+#else
+        Debug.LogWarning("지원되지 않는 플랫폼입니다.");
+#endif
+    }
+
     // 글로벌로 세팅되어 있는 렌더러 카메라의 특정 이름의 렌더링 찾기
     // public static ScriptableRendererFeature FindAndAssignTargetRenderFeature(string rendererFeatureName)
     // {

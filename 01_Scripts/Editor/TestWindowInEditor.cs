@@ -28,16 +28,9 @@ public class TestWindowInEditor : EditorWindow
         GUILayout.Label("===========================================");
         GUILayout.Space(buttonGap);
 
-        if (GUILayout.Button("Building Complete"))
+        if (GUILayout.Button("Open SaveFile Path"))
         {
-            // if( EditorApplication.isPlaying ) //플레이중이면
-            // {
-            //     ViewBase currentView = FindObjectOfType<ViewBase>();
-            //     if(currentView != null) // 현재 Main 화면이면
-            //     {
-            //         currentView.UpdateUIState();
-            //     }
-            // }
+            MyUtils.OpenPersistentDataPath();
         }
 
         GUILayout.Space(buttonGap);
