@@ -121,7 +121,8 @@ public class CSVParser<TEntity>//where TEntity : class
 
             // 컬럼 이름에서 언더바(_) 아래는 지운다
             int clipIndex = value.IndexOf('_');
-            value = value.Substring(0, clipIndex);
+            if (clipIndex >= 0)
+                value = value.Substring(0, clipIndex);
 
             columnsName.Add(value);
         }
