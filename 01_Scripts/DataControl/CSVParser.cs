@@ -118,6 +118,11 @@ public class CSVParser<TEntity>//where TEntity : class
         foreach (Match part in parts)
         {
             string value = part.Groups[1].Value.Replace("\"\"", "\""); // 이중 따옴표 처리
+
+            // 컬럼 이름에서 언더바(_) 아래는 지운다
+            int clipIndex = value.IndexOf('_');
+            value = value.Substring(0, clipIndex);
+
             columnsName.Add(value);
         }
 
