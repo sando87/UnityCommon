@@ -277,5 +277,5 @@ public class SuitRawInfo : ICSVFormat
     public float hp = 0;
 
     public int RowIndex { get; set; }
-    public long ID { get { return id.GetHashCode(); } }
+    public long ID { get { return ICSVFormat.ToID(id); } }
 }
