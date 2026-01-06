@@ -20,7 +20,7 @@ using UnityEditor.SceneManagement;
 
 #endif
 
-public static class MyExtensions
+public static partial class MyExtensions
 {
     public static void ExBitClear(this ref int val, int index)
     {
