@@ -245,6 +245,18 @@ public class MyUtils
     }
 
 
+    public static int RandomInt(int minInclusive, int maxExclusive)
+    {
+        return UnityEngine.Random.Range(minInclusive, maxExclusive);
+    }
+    public static float RandomFloat(float minInclusive, float maxInclusive)
+    {
+        return UnityEngine.Random.Range(minInclusive, maxInclusive);
+    }
+    public static float RandomRate()
+    {
+        return UnityEngine.Random.value;
+    }
     public static Vector3 Random(Vector3 pos, float range)
     {
         Vector3 ret = pos;
@@ -913,7 +925,7 @@ public class MyUtils
         return rawDataCsvFormat;
     }
 
-    
+
     public static void OpenPersistentDataPath()
     {
         string path = Application.persistentDataPath;
