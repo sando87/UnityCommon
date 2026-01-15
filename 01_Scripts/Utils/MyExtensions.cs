@@ -65,6 +65,10 @@ public static partial class MyExtensions
     {
         val = Mathf.Min(val, maxValue);
     }
+    public static bool ExIsAlmostZero(this ref float val)
+    {
+        return Mathf.Abs(val) < 0.01f;
+    }
 
 
     public static Vector3 ExRotateVector(this Vector3 vec, Vector3 axis, float degree)
