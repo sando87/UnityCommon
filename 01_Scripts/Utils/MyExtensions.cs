@@ -352,17 +352,17 @@ public static partial class MyExtensions
         }
         EventUpdate?.Invoke(1);
     }
-    public static Coroutine ExRepeatCoroutine(this MonoBehaviour mono, float interval, Action func, int repeatCount = -1)
+    public static Coroutine ExRepeatCoroutine(this MonoBehaviour mono, float interval, Action func, int repeatCount = -1, Action funcEnd = null)
     {
-        return mono.StartCoroutine(CoExRepeatCall(func, interval, repeatCount));
+        return mono.StartCoroutine(CoExRepeatCall(func, interval, repeatCount, funcEnd));
     }
-    private static IEnumerator CoExRepeatCall(Action EventEnd, float interval, int repeatCount)
+    private static IEnumerator CoExRepeatCall(Action onRepeat, float interval, int repeatCount, Action onEnd)
     {
         bool isInfiniteMode = repeatCount < 0;
         int count = 0;
         while (isInfiniteMode || count < repeatCount)
         {
-            EventEnd?.Invoke();
+            onRepeat?.Invoke();
 
             if (interval > 0)
                 yield return newWaitForSeconds.Cache(interval);
@@ -371,6 +371,7 @@ public static partial class MyExtensions
 
             count++;
         }
+        onEnd?.Invoke();
     }
     public static void ExValueTweenCoroutine(this MonoBehaviour mono, float from, float to, float duration, Action<float> eventValue)
     {
