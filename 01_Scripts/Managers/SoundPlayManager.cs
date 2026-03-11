@@ -59,19 +59,23 @@ public class SoundPlayManager : SingletonMono<SoundPlayManager>
     }
 
     public bool IsPlayingBGM { get; private set; } = false;
+    public bool IsInitialized { get; private set; } = false;
 
-    void Start()
+    public void Init()
     {
+        if (IsInitialized)
+            return;
+
         InitSoundPlayManager();
 
         LoadAudioClipData();
+
+        IsInitialized = true;
     }
 
     // 사운드 플레이 매니저 초기화
     private void InitSoundPlayManager()
     {
-        Debug.Log("InitSoundPlayManager() initialized");
-
         // 사운드 재생기 폴링을 위한 기본 구조 초기화
         mAudioSourceForBGM = gameObject.AddComponent<AudioSource>();
         mAudioSourceUsing = new GameObject("AudioSourceUsing").transform;
