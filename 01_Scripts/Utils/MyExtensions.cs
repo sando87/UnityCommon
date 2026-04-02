@@ -261,6 +261,13 @@ public static partial class MyExtensions
     }
 
 
+    public static void ExDestroyAllChildren(this Transform tr)
+    {
+        for (int i = tr.childCount - 1; i >= 0; i--)
+        {
+            GameObject.Destroy(tr.GetChild(i).gameObject);
+        }
+    }
     public static void ExSetWorldPosX(this Transform tr, float val)
     {
         tr.position = new Vector3(val, tr.position.y, tr.position.z);
