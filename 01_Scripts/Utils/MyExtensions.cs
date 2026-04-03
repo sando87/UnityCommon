@@ -608,5 +608,44 @@ public static partial class MyExtensions
 
     public static bool IsInvalid(this string str) => string.IsNullOrWhiteSpace(str);
 
+    public static void MoveInsideOf(this RectTransform me, RectTransform target)
+    {
+        // 1. me의 월드 코너 가져오기
+        Vector3[] targetWorldCorners = new Vector3[4];
+        me.GetWorldCorners(targetWorldCorners);
+
+        // 2. target의 월드 코너 가져오기
+        Vector3[] parentWorldCorners = new Vector3[4];
+        target.GetWorldCorners(parentWorldCorners);
+
+        // target 영역
+        float parentLeft = parentWorldCorners[0].x;
+        float parentRight = parentWorldCorners[2].x;
+        float parentBottom = parentWorldCorners[0].y;
+        float parentTop = parentWorldCorners[2].y;
+
+        // me 영역
+        float targetLeft = targetWorldCorners[0].x;
+        float targetRight = targetWorldCorners[2].x;
+        float targetBottom = targetWorldCorners[0].y;
+        float targetTop = targetWorldCorners[2].y;
+
+        Vector3 offset = Vector3.zero;
+
+        // X축 보정
+        if (targetLeft < parentLeft)
+            offset.x = parentLeft - targetLeft;
+        else if (targetRight > parentRight)
+            offset.x = parentRight - targetRight;
+
+        // Y축 보정
+        if (targetBottom < parentBottom)
+            offset.y = parentBottom - targetBottom;
+        else if (targetTop > parentTop)
+            offset.y = parentTop - targetTop;
+
+        // 3. 위치 이동
+        me.position += offset;
+    }
 }
 
