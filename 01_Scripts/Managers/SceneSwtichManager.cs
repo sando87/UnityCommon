@@ -15,22 +15,23 @@ using UnityEngine.UI;
 
 public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
 {
-    [SerializeField] Image FadingImage = null;
+    [SerializeField] Image _FadingImage = null;
+    [SerializeField] int _LoadingSceneNum = 0;
 
     public bool IsLoaded { get; private set; } = false;
 
     // 특별한 절차없이 씬 전환시 FadeInOut만 해주면서 씬 전환이 바로 이루어진다(가벼운 씬 전환시 사용)
-    public void LoadSceneImmediately(SceneEnum sceneEnum)
+    public void LoadSceneImmediately(int sceneNum)
     {
-        StartCoroutine(CoLoadSceneImmediately(sceneEnum));
+        StartCoroutine(CoLoadSceneImmediately(sceneNum));
     }
-    IEnumerator CoLoadSceneImmediately(SceneEnum sceneEnum)
+    IEnumerator CoLoadSceneImmediately(int sceneNum)
     {
         IsLoaded = false;
         yield return null;
 
         yield return CoFading(1, 0.25f);
-        SceneManager.LoadScene((int)sceneEnum);
+        SceneManager.LoadScene(sceneNum);
 
         yield return null;
         // 씬 전환시 안쓰는 메모리 전부 해제
@@ -46,21 +47,21 @@ public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
     }
 
     // 씬 전환시 로딩화면을 중간에 보여주면서 전환한다(무거운 씬 전환시 사용)
-    public void LoadSceneWithLoadingUI(SceneEnum sceneEnum)
+    public void LoadSceneWithLoadingUI(int sceneNum)
     {
-        StartCoroutine(CoLoadSceneWithLoadingUI(sceneEnum));
+        StartCoroutine(CoLoadSceneWithLoadingUI(sceneNum));
     }
 
-    IEnumerator CoLoadSceneWithLoadingUI(SceneEnum sceneEnum)
+    IEnumerator CoLoadSceneWithLoadingUI(int sceneNum)
     {
         IsLoaded = false;
         Scene curScene = SceneManager.GetActiveScene();
-        
+
         yield return CoFading(1);
-        AsyncOperation aoShort = SceneManager.LoadSceneAsync((int)SceneEnum.LoadingScene, LoadSceneMode.Additive);
+        AsyncOperation aoShort = SceneManager.LoadSceneAsync(_LoadingSceneNum, LoadSceneMode.Additive);
         yield return new WaitUntil(() => aoShort.isDone);
         //yield return CoFading(0);
-        FadingImage.color = new Color(0, 0, 0, 0);
+        _FadingImage.color = new Color(0, 0, 0, 0);
         yield return new WaitForSecondsRealtime(0.2f);
 
         AsyncOperation aoOld = SceneManager.UnloadSceneAsync(curScene, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
@@ -75,12 +76,12 @@ public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
         System.GC.Collect();
         yield return null;
 
-        AsyncOperation aoNew = SceneManager.LoadSceneAsync((int)sceneEnum, LoadSceneMode.Additive);
+        AsyncOperation aoNew = SceneManager.LoadSceneAsync(sceneNum, LoadSceneMode.Additive);
         yield return new WaitUntil(() => aoNew.isDone);
 
         //yield return CoFading(1);
-        FadingImage.color = new Color(0, 0, 0, 1);
-        AsyncOperation aoShort2 = SceneManager.UnloadSceneAsync((int)SceneEnum.LoadingScene, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
+        _FadingImage.color = new Color(0, 0, 0, 1);
+        AsyncOperation aoShort2 = SceneManager.UnloadSceneAsync(_LoadingSceneNum, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects);
         yield return new WaitUntil(() => aoShort2.isDone);
         yield return CoFading(0);
 
@@ -89,34 +90,14 @@ public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
 
     IEnumerator CoFading(float alpha, float tweenDuration = 0.5f)
     {
-        FadingImage.DOKill();
-        FadingImage.DOFade(alpha, tweenDuration);
+        _FadingImage.DOKill();
+        _FadingImage.DOFade(alpha, tweenDuration);
         yield return new WaitForSecondsRealtime(tweenDuration);
     }
 
-    public SceneEnum GetCurrentScene()
+    public int GetCurrentScene()
     {
-        return (SceneEnum)SceneManager.GetActiveScene().buildIndex;
+        return SceneManager.GetActiveScene().buildIndex;
     }
 }
 
-/// <summary>
-/// 빌드시에 로드하는 씬 리스트와 매칭되는 이넘
-/// 빌드설정에서의 씬 리스트와 이넘이 항상 매칭되도록 할 것.
-/// </summary>
-public enum SceneEnum
-{
-    CompanyLogo, // 0
-    GameTitle,
-    StoryDirection01,
-    StoryDirection02,
-    ChapterSelect, // 4
-    InGame,
-    Initialize,
-    InGameTutorial, // 7
-    ShootingGame, // 8
-    Ending, // 9
-    Credits, // 10
-    StoryDirection03, // 11
-    LoadingScene, // 12
-}
