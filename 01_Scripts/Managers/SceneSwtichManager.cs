@@ -30,10 +30,10 @@ public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
         IsLoaded = false;
         yield return null;
 
-        yield return CoFading(1, 0.25f);
+        yield return CoFading(1, 0.5f);
         SceneManager.LoadScene(sceneNum);
 
-        yield return null;
+        yield return newWaitForSeconds.Cache(0.5f);
         // 씬 전환시 안쓰는 메모리 전부 해제
         // ResourcesCache.ReleaseAllCachedObjects();
         // MapObjectDatabase.Instance.ReleasePrefabs();
@@ -41,7 +41,7 @@ public class SceneSwtichManager : SingletonMono<SceneSwtichManager>
         // System.GC.Collect();
         // yield return null;
 
-        yield return CoFading(0, 0.25f);
+        yield return CoFading(0, 1.0f);
 
         IsLoaded = true;
     }
